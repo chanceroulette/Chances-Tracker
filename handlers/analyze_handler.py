@@ -5,7 +5,6 @@ from logic.analysis import analyze_chances
 from logic.state import user_data, active_chances
 
 def register(bot):
-    # Inserimento numeri per analisi
     @bot.message_handler(commands=["analizza"])
     @bot.message_handler(func=lambda message: message.text == "📊 Analizza")
     def start_analysis(message: Message):
@@ -18,7 +17,6 @@ def register(bot):
             reply_markup=get_number_keyboard()
         )
 
-    # Raccolta numeri e analisi
     @bot.message_handler(func=lambda message: message.text.isdigit() and 0 <= int(message.text) <= 36)
     def collect_analysis_data(message: Message):
         user_id = message.from_user.id
@@ -40,19 +38,18 @@ def register(bot):
             chances = analyze_chances(user_data[user_id])
             user_data.pop(user_id)
 
-            # Mostra le chances suggerite
+            # Mostra messaggio con chances suggerite
             bot.send_message(
                 message.chat.id,
                 f"🔍 *Chances suggerite:* {', '.join(chances)}\n\n"
-                "✳️ Ora puoi *scegliere liberamente* quali chances attivare per il gioco.\n"
-                "_Conferma quando sei pronto._",
+                "✳️ Ora puoi *scegliere manualmente* le chances da attivare.\n"
+                "_Conferma quando hai finito._",
                 parse_mode='Markdown'
             )
 
-            # Mostra tastiera di selezione manuale
+            # Mostra tastiera con tutte le chances
             show_chances_selector(bot, message.chat.id)
 
-    # Gestione selezione chance
     @bot.message_handler(func=lambda message: message.text in [
         "🔴 Rosso", "⚫️ Nero", "🔵 Pari", "🟠 Dispari", "🟢 Manque (1–18)", "🔴 Passe (19–36)"
     ])
@@ -66,7 +63,6 @@ def register(bot):
             active_chances[user_id].append(choice)
             bot.send_message(message.chat.id, f"✅ Aggiunta: *{choice}*", parse_mode="Markdown")
 
-    # Conferma chances e passa alla fase di gioco
     @bot.message_handler(func=lambda message: message.text == "✅ Conferma selezione")
     def conferma_chances(message: Message):
         user_id = message.from_user.id
@@ -82,16 +78,13 @@ def register(bot):
             bot.send_message(
                 message.chat.id,
                 f"🎯 Hai selezionato: {', '.join(chances)}\n\n"
-                "🎲 *Pronto a iniziare il gioco!* Inserisci il primo numero.",
+                "🎲 *Inserisci ora il primo numero per avviare la strategia di gioco.*",
                 reply_markup=get_number_keyboard(),
                 parse_mode="Markdown"
             )
-
-            # Prepariamo la struttura della sessione utente per il gioco
             from logic.state import user_data
-            user_data[user_id] = []  # Riutilizziamo user_data per la fase 2
+            user_data[user_id] = []
 
-    # Annulla selezione
     @bot.message_handler(func=lambda message: message.text == "❌ Annulla")
     def annulla_rapido(message: Message):
         user_id = message.from_user.id
