@@ -1,7 +1,6 @@
-from handlers.play_handler import user_data
-from handlers.undo_handler import backup_data
-from messages.keyboard import get_main_keyboard
 from telebot.types import Message
+from logic.state import user_data, backup_data
+from messages.keyboard import get_main_keyboard
 
 def register(bot):
     @bot.message_handler(commands=["reset"])
@@ -13,6 +12,6 @@ def register(bot):
 
         bot.send_message(
             message.chat.id,
-            "🔄 Sessione azzerata! Puoi iniziare una nuova sequenza con 🎲 Gioca.",
+            "🔄 Sessione azzerata!\nPuoi iniziare una nuova sequenza con 🎲 Gioca.",
             reply_markup=get_main_keyboard()
         )
