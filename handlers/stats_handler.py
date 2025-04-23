@@ -1,4 +1,4 @@
-from handlers.play_handler import user_data
+from logic.state import user_data
 from telebot.types import Message
 from messages.keyboard import get_main_keyboard
 
@@ -23,9 +23,9 @@ def register(bot):
         bot.send_message(
             message.chat.id,
             f"📊 *Statistiche attuali*\n\n"
-            f"• Numeri inseriti: {totale}\n"
-            f"• Ultimo numero: `{ultima}`\n"
-            f"• Media numerica: `{media:.2f}`",
+            f"• 📌 Numeri inseriti: `{totale}`\n"
+            f"• 🔢 Ultimo numero: `{ultima}`\n"
+            f"• 📈 Media numerica: `{media:.2f}`",
             parse_mode='Markdown',
             reply_markup=get_main_keyboard()
         )
