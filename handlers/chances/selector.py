@@ -1,35 +1,40 @@
-# selector.py
+# handlers/chances/selector.py
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-from logic.analysis import analyze_chances
-from logic.state import selected_chances
+from logic.state import suggested_chances, selected_chances
 
-# Funzione per creare markup della tastiera delle chances
-def build_chances_keyboard(chat_id, suggerite):
-    markup = InlineKeyboardMarkup(row_width=2)
-    for chance in ["Rosso", "Nero", "Pari", "Dispari", "Manque", "Passe"]:
-        prefix = "✅ " if chance in selected_chances.get(chat_id, []) else "⬜️ "
-        markup.add(InlineKeyboardButton(f"{prefix}{chance}", callback_data=f"toggle_{chance}"))
-    markup.add(InlineKeyboardButton("🎯 Conferma e inizia il gioco", callback_data="conferma_chances"))
-    return markup
+ALL_CHANCES = ["Rosso", "Nero", "Pari", "Dispari", "Manque", "Passe"]
 
 def show_chances_selection(bot, chat_id, numbers):
-    suggerite = analyze_chances(numbers) if numbers else []
-    selected_chances[chat_id] = suggerite.copy()
-    text = (
-        f"🔍 *Suggerite:* {', '.join(suggerite) if suggerite else 'nessuna'}\n"
-        f"Scegli le chances che vuoi usare:"
-    )
-    bot.send_message(chat_id, text, parse_mode="Markdown", reply_markup=build_chances_keyboard(chat_id, suggerite))
+    freq = {"Rosso": 0, "Nero": 0, "Pari": 0, "Dispari": 0, "Manque": 0, "Passe": 0}
+    for n in numbers:
+        if n == 0: continue
+        if n % 2 == 0:
+            freq["Pari"] += 1
+        else:
+            freq["Dispari"] += 1
+        if 1 <= n <= 18:
+            freq["Manque"] += 1
+        else:
+            freq["Passe"] += 1
+        if n in [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]:
+            freq["Rosso"] += 1
+        else:
+            freq["Nero"] += 1
 
-# Registrazione callback
+    sorted_chances = sorted(freq.items(), key=lambda x: x[1], reverse=True)
+    best = [ch[0] for ch in sorted_chances[:3]]
+    suggested_chances[chat_id] = best
+    selected_chances[chat_id] = set(best)
 
-def register(bot):
-    from handlers.chances import callbacks
+    msg = f"\U0001F50D *Suggerite:* {', '.join(best)}\n\nSeleziona le chances da attivare:"
+    bot.send_message(chat_id, msg, parse_mode="Markdown", reply_markup=get_chance_markup(chat_id))
 
-    bot.register_callback_query_handler(lambda call: call.data.startswith("toggle_"), lambda call: True)(
-        lambda call: callbacks.toggle_chance(call, bot)
-    )
-
-    bot.register_callback_query_handler(lambda call: call.data == "conferma_chances", lambda call: True)(
-        lambda call: callbacks.conferma_chances(call, bot)
-    )
+def get_chance_markup(chat_id):
+    markup = InlineKeyboardMarkup(row_width=2)
+    buttons = []
+    for ch in ALL_CHANCES:
+        prefix = "✅ " if ch in selected_chances[chat_id] else "☐ "
+        buttons.append(InlineKeyboardButton(prefix + ch, callback_data=f"toggle_{ch}"))
+    markup.add(*buttons)
+    markup.add(InlineKeyboardButton("✔️ Conferma", callback_data="confirm_chances"))
+    return markup
