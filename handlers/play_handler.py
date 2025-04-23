@@ -1,76 +1,56 @@
-from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton
-from logic.analysis import analyze_chances
-from logic.state import user_data, selected_chances, game_phase
-from handlers.chances_selector import show_chances_selection
+from telebot.types import Message
+from logic.state import selected_chances, user_boxes
+from logic.game import get_next_bet, update_boxes
 from messages.keyboard import get_main_keyboard
 
 def register(bot):
-    @bot.message_handler(func=lambda message: message.text == "🎲 Gioca")
-    def avvio_rapido(message: Message):
-        user_id = message.from_user.id
-        user_data[user_id] = []
-        game_phase[user_id] = "scelta_rapida"
-        show_chances_selection(bot, message.chat.id, suggested=None)
-
     @bot.message_handler(func=lambda message: message.text.isdigit() and 0 <= int(message.text) <= 36)
-    def ricevi_numeri(message: Message):
+    def play_turn(message: Message):
         user_id = message.from_user.id
-        number = int(message.text)
-        if user_id not in user_data:
-            user_data[user_id] = []
-            game_phase[user_id] = "analisi"
-
-        if game_phase.get(user_id) != "analisi":
-            bot.send_message(message.chat.id, "⚠️ Per inserire numeri devi prima selezionare ANALIZZA dal menu.")
+        if user_id not in selected_chances or user_id not in user_boxes:
+            bot.send_message(message.chat.id, "⚠️ Devi prima avviare il gioco selezionando le chances.", reply_markup=get_main_keyboard())
             return
 
-        if len(user_data[user_id]) >= 20:
-            bot.send_message(message.chat.id, "🚫 Hai raggiunto il massimo di 20 numeri.", reply_markup=get_main_keyboard())
-            return
+        numero = int(message.text)
+        attive = selected_chances[user_id]
+        boxes_dict = user_boxes[user_id]
 
-        user_data[user_id].append(number)
-        count = len(user_data[user_id])
+        # Determina vincite
+        outcomes = {}
+        for chance in attive:
+            outcomes[chance] = is_win(chance, numero)
 
-        if count < 10:
-            bot.send_message(
-                message.chat.id,
-                f"✅ Numero *{count}* registrato: `{number}`. Inseriscine almeno 10.",
-                parse_mode='Markdown'
-            )
-        elif 10 <= count < 20:
-            bot.send_message(
-                message.chat.id,
-                f"✅ Numero *{count}* registrato: `{number}`. Premi *Analizza* oppure continua (max 20 numeri).",
-                parse_mode='Markdown',
-                reply_markup=get_main_keyboard()
-            )
-        else:
-            bot.send_message(
-                message.chat.id,
-                "✅ Hai inserito 20 numeri. Ora premi *Analizza*.",
-                reply_markup=get_main_keyboard()
-            )
+        # Calcola fiches giocate
+        puntate = get_next_bet(boxes_dict)
+        vincite = {ch: sum(puntate[ch]) if outcomes[ch] else 0 for ch in attive}
+        perdite = {ch: sum(puntate[ch]) if not outcomes[ch] else 0 for ch in attive}
 
-    @bot.message_handler(func=lambda message: message.text == "📊 Analizza")
-    def analizza(message: Message):
-        user_id = message.from_user.id
-        numeri = user_data.get(user_id, [])
-        if len(numeri) < 10:
-            bot.send_message(message.chat.id, "⚠️ Devi inserire almeno 10 numeri per analizzare.")
-            return
-        game_phase[user_id] = "analisi_completa"
-        suggerite = analyze_chances(numeri)
-        show_chances_selection(bot, message.chat.id, suggested=suggerite)
+        # Aggiorna i box
+        user_boxes[user_id] = update_boxes(boxes_dict, outcomes)
 
-# Tastiera numerica
-def get_number_keyboard():
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    row = []
-    for i in range(37):
-        row.append(KeyboardButton(str(i)))
-        if len(row) == 6:
-            keyboard.row(*row)
-            row = []
-    if row:
-        keyboard.row(*row)
-    return keyboard
+        # Risultato testuale
+        msg = f"🎯 Numero uscito: *{numero}*
+
+"
+        for ch in attive:
+            msg += f"• *{ch}* → {'✅ Vinto' if outcomes[ch] else '❌ Perso'} | "
+            msg += f"Puntate: `{sum(puntate[ch])}` | "
+            msg += f"{'Vincita' if outcomes[ch] else 'Perdita'}: `{vincite[ch] or perdite[ch]}`
+"
+
+        bot.send_message(message.chat.id, msg, parse_mode='Markdown', reply_markup=get_main_keyboard())
+
+def is_win(chance, number):
+    if chance == "Rosso":
+        return number in [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]
+    if chance == "Nero":
+        return number in [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]
+    if chance == "Pari":
+        return number != 0 and number % 2 == 0
+    if chance == "Dispari":
+        return number % 2 == 1
+    if chance == "Manque":
+        return 1 <= number <= 18
+    if chance == "Passe":
+        return 19 <= number <= 36
+    return False
