@@ -1,7 +1,7 @@
 from telebot.types import Message
 from logic.state import user_data
 from messages.keyboard import get_number_keyboard, get_main_keyboard
-from handlers.chances_selector import show_chances_selection
+from handlers import chances_selector
 
 
 def register(bot):
@@ -47,7 +47,7 @@ def register(bot):
                 f"✅ Numero 20 registrato: `{number}`. Avvio analisi...",
                 parse_mode='Markdown'
             )
-            show_chances_selection(bot, message.chat.id, user_data[user_id])
+            chances_selector.show_chances_selection(bot, message.chat.id, user_data[user_id])
 
     @bot.message_handler(func=lambda message: message.text == "📊 Analizza ora")
     def analyze_now(message: Message):
@@ -60,10 +60,10 @@ def register(bot):
             )
             return
 
-        show_chances_selection(bot, message.chat.id, user_data[user_id])
+        chances_selector.show_chances_selection(bot, message.chat.id, user_data[user_id])
 
     @bot.message_handler(func=lambda message: message.text == "⚡ Avvio rapido")
     def quick_start(message: Message):
         user_id = message.from_user.id
         user_data[user_id] = []
-        show_chances_selection(bot, message.chat.id, [])
+        chances_selector.show_chances_selection(bot, message.chat.id, [])
