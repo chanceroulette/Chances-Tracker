@@ -3,6 +3,7 @@ from telebot.types import Message
 from messages.keyboard import get_main_keyboard
 
 def register(bot):
+    @bot.message_handler(commands=['statistiche'])
     @bot.message_handler(func=lambda message: message.text == "📊 Statistiche")
     def stats(message: Message):
         user_id = message.from_user.id
