@@ -2,7 +2,7 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 from messages.keyboard import get_main_keyboard
 from logic.analysis import analyze_chances
 from logic.state import user_data, selected_chances
-from messages.chances_selector import show_chances_selection
+from handlers.chances_selector import show_chances_selection
 
 def register(bot):
     @bot.message_handler(func=lambda message: message.text == "🎯 Analizza")
