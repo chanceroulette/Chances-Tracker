@@ -7,5 +7,6 @@ def register(bot):
         bot.send_message(
             message.chat.id,
             get_welcome_message(),
+            parse_mode='Markdown',
             reply_markup=get_main_keyboard()
         )
