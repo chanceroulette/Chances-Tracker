@@ -1,63 +1,72 @@
-from telebot.types import Message
-from logic.state import user_data
-from messages.keyboard import get_number_keyboard, get_main_keyboard
-from messages.chances_selector import show_chances_selection
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from logic.analysis import analyze_chances
+from logic.state import selected_chances, user_boxes
+from logic.game import initialize_boxes
+from messages.keyboard import get_main_keyboard
 
+# Mostra tastiera di selezione chances
 
-def register(bot):
-    @bot.message_handler(func=lambda message: message.text == "📊 Analizza")
-    def start_analysis(message: Message):
-        user_id = message.from_user.id
-        user_data[user_id] = []
+def show_chances_selection(bot, chat_id, numbers):
+    suggerite = analyze_chances(numbers)
+    selected_chances[chat_id] = suggerite.copy()
 
-        bot.send_message(
-            message.chat.id,
-            "🎯 Inserisci i numeri della roulette uno alla volta usando la tastiera numerica.",
-            parse_mode='Markdown',
-            reply_markup=get_number_keyboard()
-        )
+    text = (
+        f"🔍 *Suggerite:* {', '.join(suggerite)}\n"
+        "Puoi selezionare o deselezionare liberamente le chances da usare.\n"
+        "Premi ✅ *Conferma* per iniziare la fase di gioco."
+    )
 
-    @bot.message_handler(func=lambda message: message.text.isdigit() and 0 <= int(message.text) <= 36)
-    def collect_number(message: Message):
-        user_id = message.from_user.id
-        number = int(message.text)
+    keyboard = InlineKeyboardMarkup()
+    row = []
+    for chance in ["Rosso", "Nero", "Pari", "Dispari", "Manque", "Passe"]:
+        selected = "✅" if chance in selected_chances[chat_id] else "⬜"
+        row.append(InlineKeyboardButton(f"{selected} {chance}", callback_data=f"toggle_{chance}"))
+        if len(row) == 2:
+            keyboard.row(*row)
+            row = []
+    if row:
+        keyboard.row(*row)
 
-        if user_id not in user_data:
-            user_data[user_id] = []
+    keyboard.row(InlineKeyboardButton("✅ Conferma", callback_data="conferma_chances"))
 
-        user_data[user_id].append(number)
-        count = len(user_data[user_id])
+    bot.send_message(
+        chat_id,
+        text,
+        parse_mode="Markdown",
+        reply_markup=keyboard
+    )
 
-        if count < 10:
-            bot.send_message(
-                message.chat.id,
-                f"✅ Numero {count} registrato: `{number}`. Inseriscine almeno 10.",
-                parse_mode='Markdown'
-            )
-        elif count < 20:
-            bot.send_message(
-                message.chat.id,
-                f"✅ Numero {count} registrato: `{number}`. Premi *Analizza ora* oppure continua (max 20 numeri).",
-                parse_mode='Markdown',
-                reply_markup=get_main_keyboard()
-            )
+# Gestione callback chance
+
+def handle_chance_callbacks(bot):
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("toggle_"))
+    def toggle_chance(call: CallbackQuery):
+        user_id = call.message.chat.id
+        chance = call.data.replace("toggle_", "")
+        if user_id not in selected_chances:
+            selected_chances[user_id] = []
+
+        if chance in selected_chances[user_id]:
+            selected_chances[user_id].remove(chance)
         else:
-            bot.send_message(
-                message.chat.id,
-                f"✅ Numero 20 registrato: `{number}`. Avvio analisi...",
-                parse_mode='Markdown'
-            )
-            show_chances_selection(bot, message.chat.id, user_data[user_id])
+            selected_chances[user_id].append(chance)
 
-    @bot.message_handler(func=lambda message: message.text == "📊 Analizza ora")
-    def analyze_now(message: Message):
-        user_id = message.from_user.id
-        if user_id not in user_data or len(user_data[user_id]) < 10:
-            bot.send_message(
-                message.chat.id,
-                "⚠️ Devi inserire almeno 10 numeri per analizzare.",
-                reply_markup=get_main_keyboard()
-            )
+        bot.answer_callback_query(call.id)
+        show_chances_selection(bot, user_id, [])
+
+    @bot.callback_query_handler(func=lambda call: call.data == "conferma_chances")
+    def conferma_chances(call: CallbackQuery):
+        user_id = call.message.chat.id
+        chances = selected_chances.get(user_id, [])
+
+        if not chances:
+            bot.answer_callback_query(call.id, "❗ Seleziona almeno una chance.", show_alert=True)
             return
 
-        show_chances_selection(bot, message.chat.id, user_data[user_id])
+        initialize_boxes(user_id, chances)
+        bot.send_message(
+            user_id,
+            "🎮 Fase di gioco avviata! Inserisci i numeri con la tastiera numerica.",
+            parse_mode="Markdown",
+            reply_markup=get_main_keyboard()
+        )
