@@ -1,35 +1,39 @@
-# selector.py
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-from logic.analysis import analyze_chances
+# handlers/chances/callbacks.py
+from telebot.types import CallbackQuery
 from logic.state import selected_chances
+from handlers.chances.selector import get_chance_markup
+from logic.game import initialize_boxes
 
-# Funzione per creare markup della tastiera delle chances
-def build_chances_keyboard(chat_id, suggerite):
-    markup = InlineKeyboardMarkup(row_width=2)
-    for chance in ["Rosso", "Nero", "Pari", "Dispari", "Manque", "Passe"]:
-        prefix = "✅ " if chance in selected_chances.get(chat_id, []) else "⬜️ "
-        markup.add(InlineKeyboardButton(f"{prefix}{chance}", callback_data=f"toggle_{chance}"))
-    markup.add(InlineKeyboardButton("🎯 Conferma e inizia il gioco", callback_data="conferma_chances"))
-    return markup
-
-def show_chances_selection(bot, chat_id, numbers):
-    suggerite = analyze_chances(numbers) if numbers else []
-    selected_chances[chat_id] = suggerite.copy()
-    text = (
-        f"🔍 *Suggerite:* {', '.join(suggerite) if suggerite else 'nessuna'}\n"
-        f"Scegli le chances che vuoi usare:"
-    )
-    bot.send_message(chat_id, text, parse_mode="Markdown", reply_markup=build_chances_keyboard(chat_id, suggerite))
-
-# Registrazione callback
+ALL_CHANCES = ["Rosso", "Nero", "Pari", "Dispari", "Manque", "Passe"]
 
 def register(bot):
-    from handlers.chances import callbacks
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("toggle_"))
+    def toggle_chance(call: CallbackQuery):
+        chat_id = call.message.chat.id
+        chance = call.data.split("_", 1)[1]
+        if chat_id not in selected_chances:
+            selected_chances[chat_id] = set()
 
-    bot.register_callback_query_handler(lambda call: call.data.startswith("toggle_"), lambda call: True)(
-        lambda call: callbacks.toggle_chance(call, bot)
-    )
+        if chance in selected_chances[chat_id]:
+            selected_chances[chat_id].remove(chance)
+        else:
+            selected_chances[chat_id].add(chance)
 
-    bot.register_callback_query_handler(lambda call: call.data == "conferma_chances", lambda call: True)(
-        lambda call: callbacks.conferma_chances(call, bot)
-    )
+        bot.edit_message_reply_markup(chat_id, call.message.message_id, reply_markup=get_chance_markup(chat_id))
+
+    @bot.callback_query_handler(func=lambda call: call.data == "confirm_chances")
+    def confirm_chances(call: CallbackQuery):
+        chat_id = call.message.chat.id
+        chances = list(selected_chances.get(chat_id, []))
+        if not chances:
+            bot.answer_callback_query(call.id, "❗ Seleziona almeno una chance.", show_alert=True)
+            return
+
+        initialize_boxes(chat_id, chances)
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=call.message.message_id,
+            text=f"✅ Chances attive: *{', '.join(chances)}*\nInizia ora la fase di gioco.",
+            parse_mode="Markdown"
+        )
+        # (Aggiungeremo qui la transizione alla fase 3: gioco)
