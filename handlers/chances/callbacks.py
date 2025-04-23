@@ -36,9 +36,7 @@ def register(bot):
 
         bot.send_message(
             call.message.chat.id,
-            f"✅ Chances attive: *{', '.join(chances)}*
-
-🎯 Inizia la FASE GIOCO inserendo i numeri estratti!",
+            f"✅ Chances attive: *{', '.join(chances)}*\n\n🎯 Inizia la *FASE GIOCO* inserendo i numeri estratti!",
             parse_mode='Markdown',
             reply_markup=get_main_keyboard()
         )
