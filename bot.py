@@ -16,7 +16,8 @@ from handlers import (
     help_handler,
     menu_handler,
     play_handler,
-    undo_handler
+    undo_handler,
+    reset_handler
 )
 
 # === Registra gli handler ===
@@ -25,6 +26,7 @@ help_handler.register(bot)
 menu_handler.register(bot)
 play_handler.register(bot)
 undo_handler.register(bot)
+reset_handler.register(bot)
 
 # === Imposta webhook subito ===
 try:
