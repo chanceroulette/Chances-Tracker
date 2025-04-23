@@ -1,32 +1,38 @@
 # logic/game.py
 
-# Simulazione della logica "box" per ciascuna chance selezionata
+# Ogni utente avrà box separati per ciascuna chance selezionata
 
-# Ogni box è una lista di numeri che rappresentano fiches
-def initialize_boxes():
-    return [[1], [1], [1], [1]]  # 4 box da 1 fiche
+def initialize_boxes(chances):
+    return {chance: [[1], [1], [1], [1]] for chance in chances}
 
-def get_next_bet(boxes):
-    # Calcola la prossima puntata: somma prima + ultima fiche di ogni box
-    bets = []
-    for box in boxes:
-        if len(box) == 1:
-            bets.append(box[0])
-        else:
-            bets.append(box[0] + box[-1])
+def get_next_bet(boxes_dict):
+    bets = {}
+    for chance, boxes in boxes_dict.items():
+        bets[chance] = []
+        for box in boxes:
+            if len(box) == 1:
+                bets[chance].append(box[0])
+            else:
+                bets[chance].append(box[0] + box[-1])
     return bets
 
-def update_boxes(boxes, results, win_flags):
-    new_boxes = []
-    for i, win in enumerate(win_flags):
-        box = boxes[i]
-        if win:
-            if len(box) > 1:
-                new_boxes.append(box[1:-1])  # rimuove prima e ultima
+def update_boxes(boxes_dict, outcomes):
+    # outcomes = dict {chance: win/loss -> True/False}
+    updated = {}
+    for chance, boxes in boxes_dict.items():
+        win = outcomes.get(chance, False)
+        new_boxes = []
+        for box in boxes:
+            if win:
+                if len(box) > 1:
+                    new_box = box[1:-1]  # rimuove prima e ultima
+                else:
+                    new_box = []
             else:
-                new_boxes.append([])  # svuota
-        else:
-            new_value = box[0] + box[-1] if len(box) > 1 else box[0]
-            new_boxes.append(box + [new_value])
-    # Ricrea box vuoti con [1]
-    return [b if b else [1] for b in new_boxes]
+                new_val = box[0] + box[-1] if len(box) > 1 else box[0]
+                new_box = box + [new_val]
+            if not new_box:
+                new_box = [1]
+            new_boxes.append(new_box)
+        updated[chance] = new_boxes
+    return updated
