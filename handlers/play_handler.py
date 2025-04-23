@@ -1,10 +1,7 @@
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 from messages.keyboard import get_main_keyboard
 from logic.analysis import analyze_chances
-from handlers.undo_handler import backup_data  # per annullare
-
-# Dizionario globale per memorizzare numeri utente
-user_data = {}
+from logic.state import user_data, backup_data  # ✅ Import centralizzato
 
 def register(bot):
     @bot.message_handler(func=lambda message: message.text == "🎲 Gioca")
