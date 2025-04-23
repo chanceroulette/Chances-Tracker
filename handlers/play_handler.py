@@ -1,11 +1,12 @@
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 from messages.keyboard import get_main_keyboard
 from logic.analysis import analyze_chances
-from logic.state import user_data, backup_data  # ✅ Import centralizzato
+from logic.state import user_data, selected_chances
+from messages.chances_selector import show_chances_selection
 
 def register(bot):
-    @bot.message_handler(func=lambda message: message.text == "🎲 Gioca")
-    def start_play(message):
+    @bot.message_handler(func=lambda message: message.text == "🎯 Analizza")
+    def analyze(message):
         user_id = message.from_user.id
         user_data[user_id] = []
         bot.send_message(
@@ -15,16 +16,18 @@ def register(bot):
             reply_markup=get_number_keyboard()
         )
 
+    @bot.message_handler(func=lambda message: message.text == "⚡ Avvio rapido")
+    def quick_start(message):
+        user_id = message.from_user.id
+        selected_chances[user_id] = []
+        show_chances_selection(bot, message.chat.id, suggestions=[])
+
     @bot.message_handler(func=lambda message: message.text.isdigit() and 0 <= int(message.text) <= 36)
     def collect_number(message):
         user_id = message.from_user.id
         number = int(message.text)
-
         if user_id not in user_data:
             user_data[user_id] = []
-
-        # Backup per annullare
-        backup_data[user_id] = user_data[user_id].copy()
         user_data[user_id].append(number)
         count = len(user_data[user_id])
 
@@ -37,16 +40,14 @@ def register(bot):
         else:
             numbers = user_data[user_id]
             chances = analyze_chances(numbers)
-            del user_data[user_id]  # Reset dati utente
-
+            del user_data[user_id]
             bot.send_message(
                 message.chat.id,
-                f"✅ Numeri completati!\n\n📊 *Chances consigliate:* {', '.join(chances)}",
-                parse_mode='Markdown',
-                reply_markup=get_main_keyboard()
+                f"✅ *Numeri completati!*\n\n📊 *Chances consigliate:* {', '.join(chances)}",
+                parse_mode='Markdown'
             )
+            show_chances_selection(bot, message.chat.id, suggestions=chances)
 
-# Tastiera numerica
 def get_number_keyboard():
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
     row = []
@@ -57,4 +58,5 @@ def get_number_keyboard():
             row = []
     if row:
         keyboard.row(*row)
+    keyboard.row(KeyboardButton("☰ Menu"))
     return keyboard
