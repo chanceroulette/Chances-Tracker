@@ -1,34 +1,31 @@
-
 from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton
-from messages.keyboard import get_main_keyboard
 from logic.analysis import analyze_chances
-from logic.state import user_data, selected_chances, is_ready
+from logic.state import user_data, selected_chances, game_phase
 from handlers.chances_selector import show_chances_selection
+from messages.keyboard import get_main_keyboard
 
 def register(bot):
     @bot.message_handler(func=lambda message: message.text == "🎲 Gioca")
-    def start_play(message: Message):
+    def avvio_rapido(message: Message):
         user_id = message.from_user.id
         user_data[user_id] = []
-        is_ready[user_id] = False
-        bot.send_message(
-            message.chat.id,
-            "🎯 Inserisci *da 10 a 20 numeri* della roulette per l’analisi iniziale.",
-            parse_mode='Markdown',
-            reply_markup=get_number_keyboard()
-        )
+        game_phase[user_id] = "scelta_rapida"
+        show_chances_selection(bot, message.chat.id, suggested=None)
 
     @bot.message_handler(func=lambda message: message.text.isdigit() and 0 <= int(message.text) <= 36)
-    def collect_number(message: Message):
+    def ricevi_numeri(message: Message):
         user_id = message.from_user.id
         number = int(message.text)
-
         if user_id not in user_data:
             user_data[user_id] = []
-            is_ready[user_id] = False
+            game_phase[user_id] = "analisi"
 
-        if is_ready.get(user_id, False):
-            bot.send_message(message.chat.id, "⚠️ Hai già completato l’analisi. Usa il menu per continuare.")
+        if game_phase.get(user_id) != "analisi":
+            bot.send_message(message.chat.id, "⚠️ Per inserire numeri devi prima selezionare ANALIZZA dal menu.")
+            return
+
+        if len(user_data[user_id]) >= 20:
+            bot.send_message(message.chat.id, "🚫 Hai raggiunto il massimo di 20 numeri.", reply_markup=get_main_keyboard())
             return
 
         user_data[user_id].append(number)
@@ -37,33 +34,33 @@ def register(bot):
         if count < 10:
             bot.send_message(
                 message.chat.id,
-                f"✅ Numero *{count}* salvato: `{number}`
-Ne servono almeno 10 per l’analisi.",
+                f"✅ Numero *{count}* registrato: `{number}`. Inseriscine almeno 10.",
                 parse_mode='Markdown'
             )
-        elif count <= 20:
+        elif 10 <= count < 20:
             bot.send_message(
                 message.chat.id,
-                f"✅ Numero *{count}* salvato: `{number}`
-Premi *Analizza* per completare oppure continua (max 20 numeri).",
+                f"✅ Numero *{count}* registrato: `{number}`. Premi *Analizza* oppure continua (max 20 numeri).",
                 parse_mode='Markdown',
                 reply_markup=get_main_keyboard()
             )
         else:
-            bot.send_message(message.chat.id, "🚫 Hai raggiunto il massimo di 20 numeri.", reply_markup=get_main_keyboard())
+            bot.send_message(
+                message.chat.id,
+                "✅ Hai inserito 20 numeri. Ora premi *Analizza*.",
+                reply_markup=get_main_keyboard()
+            )
 
     @bot.message_handler(func=lambda message: message.text == "📊 Analizza")
-    def analyze(message: Message):
+    def analizza(message: Message):
         user_id = message.from_user.id
-        numbers = user_data.get(user_id, [])
-
-        if len(numbers) < 10:
-            bot.send_message(message.chat.id, "⚠️ Servono almeno 10 numeri per analizzare.")
+        numeri = user_data.get(user_id, [])
+        if len(numeri) < 10:
+            bot.send_message(message.chat.id, "⚠️ Devi inserire almeno 10 numeri per analizzare.")
             return
-
-        suggested = analyze_chances(numbers)
-        show_chances_selection(bot, message.chat.id, suggested)
-        is_ready[user_id] = True
+        game_phase[user_id] = "analisi_completa"
+        suggerite = analyze_chances(numeri)
+        show_chances_selection(bot, message.chat.id, suggested=suggerite)
 
 # Tastiera numerica
 def get_number_keyboard():
