@@ -1,5 +1,6 @@
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-from logic.state import selected_chances
+from logic.state import selected_chances, user_boxes
+from logic.game import initialize_boxes
 from messages.keyboard import get_main_keyboard
 
 CHANCES = ["Rosso", "Nero", "Pari", "Dispari", "Manque", "Passe"]
@@ -44,6 +45,10 @@ def handle_chance_callbacks(bot):
             if chat_id not in selected_chances or not selected_chances[chat_id]:
                 bot.answer_callback_query(call.id, "❗Devi selezionare almeno una chance.")
                 return
+
+            # Inizializza i box per il gioco
+            user_boxes[chat_id] = initialize_boxes(selected_chances[chat_id])
+
             bot.send_message(
                 chat_id,
                 f"🎯 *Gioco avviato!*
