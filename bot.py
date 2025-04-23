@@ -3,13 +3,16 @@ from dotenv import load_dotenv
 import telebot
 from flask import Flask, request
 
+from handlers import start_handler, help_handler
+
 load_dotenv()
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 bot = telebot.TeleBot(TOKEN)
 
-from handlers.test_handler import register_test
-register_test(bot)
+# Registrazione handler
+start_handler.register(bot)
+help_handler.register(bot)
 
 app = Flask(__name__)
 
@@ -30,4 +33,4 @@ if __name__ == "__main__":
     bot.remove_webhook()
     bot.set_webhook(url=WEBHOOK_URL)
     print("🤖 Webhook impostato e Flask attivo")
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=10000)
