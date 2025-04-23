@@ -1,12 +1,23 @@
 from telebot.types import Message
-from logic.state import user_data  # ✅ Import da modulo centrale
+from logic.state import user_data, backup_data
+from messages.keyboard import get_main_keyboard
+from messages.keyboard import get_number_keyboard
 
 def register(bot):
     @bot.message_handler(func=lambda message: message.text == "↩️ Annulla")
-    def undo_last(message: Message):
-        chat_id = message.chat.id
-        if chat_id in user_data and user_data[chat_id]["numbers"]:
-            last = user_data[chat_id]["numbers"].pop()
-            bot.send_message(chat_id, f"🔄 Ultimo numero annullato: {last}")
+    def undo(message: Message):
+        user_id = message.from_user.id
+
+        if user_id in backup_data:
+            user_data[user_id] = backup_data[user_id].copy()
+            bot.send_message(
+                message.chat.id,
+                "↩️ Ultima giocata ripristinata!\nPuoi continuare a inserire i numeri.",
+                reply_markup=get_number_keyboard()
+            )
         else:
-            bot.send_message(chat_id, "⚠️ Nessuna giocata da annullare.")
+            bot.send_message(
+                message.chat.id,
+                "⚠️ Nessuna giocata da annullare.",
+                reply_markup=get_main_keyboard()
+            )
