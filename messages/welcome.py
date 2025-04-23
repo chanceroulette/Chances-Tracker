@@ -1,12 +1,13 @@
 def get_welcome_message():
     return (
         "🎰 *Benvenuto su ChanceTracker™!*\n\n"
-        "Questo bot ti aiuta a *simulare* e *gestire* il tuo sistema di gioco "
-        "alla _roulette europea_, basato su:\n"
-        "• 🎯 Strategie statistiche\n"
-        "• 📊 Analisi automatica\n"
-        "• 🎲 Gestione intelligente delle fiches\n\n"
-        "Digita menu o usa i tasti in basso per iniziare subito. 🧠\n\n"
-        "_Buona fortuna e buon divertimento!_\n\n"
+        "Questo bot ti aiuta a *simulare* un sistema di gioco strategico sulla _roulette europea_, diviso in 2 fasi:\n\n"
+        "🔍 *Fase di Analisi*\n"
+        "• 📊 Analizza: inserisci numeri per trovare le chances migliori\n"
+        "• ⚡ Avvio rapido: scegli manualmente le chances\n\n"
+        "🎯 *Fase di Gioco*\n"
+        "• 🎲 Gioca: avvia il sistema a box sulle chances selezionate\n"
+        "• ↩️ Annulla – 🔄 Reset – 📊 Statistiche\n\n"
+        "_Usa i tasti in basso per iniziare o digita menu_ 👇\n\n"
         "© 2025 *Fabio Felice Cudia* – Tutti i diritti riservati."
     )
