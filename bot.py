@@ -19,7 +19,8 @@ from handlers import (
     help_handler,
     menu_handler,
     stats_handler,
-    chances_selector
+    chances_selector,
+    play_box_handler
 )
 
 # Register handlers
@@ -31,6 +32,7 @@ help_handler.register(bot)
 menu_handler.register(bot)
 stats_handler.register(bot)
 chances_selector.handle_chance_callbacks(bot)
+play_box_handler.register(bot)
 
 # Webhook Setup
 import requests
