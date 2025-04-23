@@ -1,63 +1,65 @@
 import os
+import telebot
 from flask import Flask, request
-from telebot import TeleBot
-from telebot.types import Update
 from dotenv import load_dotenv
+
+from messages.welcome import get_welcome_message
+from messages.keyboard import get_main_keyboard
+from handlers import (
+    start_handler,
+    analyze_handler,
+    play_box_handler,
+    play_handler,
+    chances_selector,
+    undo_handler,
+    stats_handler,
+    reset_handler,
+    help_handler,       # aggiunto
+    menu_handler        # aggiunto
+)
 
 load_dotenv()
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+bot = telebot.TeleBot(TOKEN)
+app = Flask(__name__)
 
-bot = TeleBot(TOKEN)
+# Webhook Flask
+@app.route("/", methods=["POST"])
+def webhook():
+    bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
+    return "", 200
 
-# Import handler
-from handlers import (
-    start_handler,
-    play_handler,
-    undo_handler,
-    reset_handler,
-    help_handler,
-    menu_handler,
-    stats_handler,
-    chances_selector,
-    play_box_handler
-)
+@app.route("/", methods=["GET"])
+def index():
+    return "✅ Bot attivo su Flask!", 200
 
-# Register handlers
+# Comando /start
+@bot.message_handler(commands=["start"])
+def send_welcome(message):
+    bot.send_message(
+        message.chat.id,
+        get_welcome_message(),
+        parse_mode='Markdown',
+        reply_markup=get_main_keyboard()
+    )
+
+# Registrazione handler
 start_handler.register(bot)
-play_handler.register(bot)
-undo_handler.register(bot)
-reset_handler.register(bot)
-help_handler.register(bot)
-menu_handler.register(bot)
-stats_handler.register(bot)
-chances_selector.handle_chance_callbacks(bot)
+analyze_handler.register(bot)
 play_box_handler.register(bot)
+play_handler.register(bot)
+chances_selector.register(bot)
+undo_handler.register(bot)
+stats_handler.register(bot)
+reset_handler.register(bot)
+help_handler.register(bot)        # registrato
+menu_handler.register(bot)        # registrato
 
-# Webhook Setup
-import requests
-info = requests.get(f"https://api.telegram.org/bot{TOKEN}/getWebhookInfo").json()
-current = info["result"].get("url", "")
-if current != WEBHOOK_URL:
+# Avvio bot
+if __name__ == "__main__":
     bot.remove_webhook()
     bot.set_webhook(url=WEBHOOK_URL)
     print("🔁 Webhook aggiornato all’avvio")
-else:
-    print("✅ Webhook già attivo")
-
-# Flask setup
-app = Flask(__name__)
-
-@app.route("/", methods=["GET"])
-def home():
-    return "🤖 Bot attivo"
-
-@app.route("/", methods=["POST"])
-def webhook():
-    update = Update.de_json(request.stream.read().decode("utf-8"))
-    bot.process_new_updates([update])
-    return "", 200
-
-if __name__ == "__main__":
     print("🚀 Avvio Flask...")
     app.run(host="0.0.0.0", port=10000)
