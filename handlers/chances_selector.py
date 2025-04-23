@@ -15,12 +15,16 @@ def show_chances_selection(bot, chat_id, suggested=None):
     markup.add(InlineKeyboardButton("🎯 Conferma e inizia il gioco", callback_data="confirm_chances"))
 
     suggerite = ", ".join(suggested) if suggested else "nessuna"
-    bot.send_message(
-        chat_id,
-        f"🔍 *Suggerite:* {suggerite}
+    message = (
+        f"🔍 *Suggerite:* {suggerite}*
 
 "
-        f"Scegli le chances che vuoi usare:",
+        f"Scegli le chances che vuoi usare:"
+    )
+
+    bot.send_message(
+        chat_id,
+        message,
         parse_mode='Markdown',
         reply_markup=markup
     )
