@@ -20,7 +20,8 @@ from handlers import (
     undo_handler,
     stats_handler,
     reset_handler,
-    analyze_handler
+    analyze_handler,
+    stats_handler
 )
 
 start_handler.register(bot)
@@ -31,6 +32,8 @@ undo_handler.register(bot)
 stats_handler.register(bot)
 reset_handler.register(bot)
 analyze_handler.register(bot)
+stats_handler.register(bot)
+
 
 # ===== IMPOSTAZIONE WEBHOOK =====
 try:
