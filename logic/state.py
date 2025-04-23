@@ -1,11 +1,13 @@
-# Memorizza i numeri inseriti dall’utente
+# Stato globale per ogni utente
+
+# Lista numeri inseriti per l'analisi
 user_data = {}
 
-# Salva lo stato precedente per annullare
-backup_data = {}
+# Fase attuale del gioco per ogni utente (es. 'analisi', 'gioco')
+game_phase = {}
 
-# Memorizza le chances selezionate dall’utente
+# Chances selezionate per ogni utente
 selected_chances = {}
 
-# Stato corrente del gioco (es: "analisi", "gioco", "attesa")
-game_phase = {}
+# Struttura dei box di fiches per ogni chance attiva
+user_boxes = {}
