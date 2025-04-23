@@ -1,44 +1,33 @@
-from handlers.play_handler import user_data
 from telebot.types import Message
 from messages.keyboard import get_main_keyboard
-from logic.analysis import analyze_chances
-from handlers.chances_selector import show_chances_selection
+from messages.welcome import get_welcome_message
 
 def register(bot):
-    @bot.message_handler(commands=['statistiche'])
-    @bot.message_handler(func=lambda m: m.text == "📊 Statistiche")
-    def stats(message: Message):
-        user_id = message.from_user.id
-
-        if user_id not in user_data or len(user_data[user_id]) == 0:
-            bot.send_message(
-                message.chat.id,
-                "📉 Nessuna giocata registrata per ora.",
-                reply_markup=get_main_keyboard()
-            )
-            return
-
-        nums = user_data[user_id]
-        totale = len(nums)
-        ultima = nums[-1]
-        media = sum(nums) / totale if totale > 0 else 0
-
+    @bot.message_handler(commands=['start'])
+    def start(message: Message):
         bot.send_message(
             message.chat.id,
-            f"📊 *Statistiche attuali*\n\n"
-            f"• Numeri inseriti: {totale}\n"
-            f"• Ultimo numero: `{ultima}`\n"
-            f"• Media numerica: `{media:.2f}`",
+            get_welcome_message(),
+            parse_mode='Markdown',
+            reply_markup=get_main_keyboard()
+        )
+
+    @bot.message_handler(commands=['menu'])
+    def menu_cmd(message: Message):
+        bot.send_message(
+            message.chat.id,
+            get_welcome_message(),
             parse_mode='Markdown',
             reply_markup=get_main_keyboard()
         )
 
     @bot.message_handler(commands=['analizza'])
-    @bot.message_handler(func=lambda m: m.text == "📊 Analizza")
     def analizza(message: Message):
         bot.send_message(
             message.chat.id,
-            "📊 Avvio rapido analisi: scegli le chances che vuoi attivare.",
-            reply_markup=get_main_keyboard()
+            "📊 Inserisci *minimo 10 e massimo 20 numeri* per analizzare le chances più attive.",
+            parse_mode='Markdown'
         )
-        show_chances_selection(bot, message)
+        # Avvia fase raccolta numeri per analisi
+        from handlers.play_handler import start_analysis
+        start_analysis(bot, message)
