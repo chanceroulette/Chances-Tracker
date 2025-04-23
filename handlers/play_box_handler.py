@@ -1,23 +1,10 @@
 from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from logic.analysis import analyze_chances
 from logic.state import user_data, selected_chances, game_phase
-from messages.keyboard import get_main_keyboard
+from messages.keyboard import get_main_keyboard, get_number_keyboard
 from handlers.chances_selector import show_chances_selection
 
 def register(bot):
-    def get_number_keyboard():
-        keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-        row = []
-        for i in range(37):
-            row.append(KeyboardButton(str(i)))
-            if len(row) == 6:
-                keyboard.row(*row)
-                row = []
-        if row:
-            keyboard.row(*row)
-        keyboard.row(KeyboardButton("📊 Analizza ora"))
-        keyboard.row(KeyboardButton("☰ Menu"))
-        return keyboard
 
     @bot.message_handler(func=lambda message: message.text == "📊 Analizza")
     def start_analysis(message: Message):
