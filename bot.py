@@ -3,7 +3,8 @@ from dotenv import load_dotenv
 import telebot
 from flask import Flask, request
 
-from handlers import start_handler, help_handler
+from handlers import start_handler, help_handler, menu_handler
+
 
 load_dotenv()
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -13,6 +14,7 @@ bot = telebot.TeleBot(TOKEN)
 # Registrazione handler
 start_handler.register(bot)
 help_handler.register(bot)
+menu_handler.register(bot)
 
 app = Flask(__name__)
 
