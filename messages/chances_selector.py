@@ -1,61 +1,48 @@
-from telebot.types import ReplyKeyboardMarkup, KeyboardButton
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from logic.state import selected_chances, confirmed_chances
+from messages.keyboard import get_main_keyboard
 
-CHANCES = ["🔴 Rosso", "⚫ Nero", "🟢 Pari", "🟡 Dispari", "🔵 Manque", "🟣 Passe"]
-CONFIRM = "✅ Conferma selezione"
-CANCEL = "❌ Annulla selezione"
+ALL_CHANCES = ["Rosso", "Nero", "Pari", "Dispari", "Manque", "Passe"]
 
-# Stato per ciascun utente: scelte attive
-selected_chances = {}
+def show_chances_selection(bot, chat_id, suggestions=None):
+    user_id = chat_id  # lo user_id coincide in questo contesto
+    markup = InlineKeyboardMarkup(row_width=3)
+    if user_id not in selected_chances:
+        selected_chances[user_id] = suggestions if suggestions else []
 
-def show_chances_selector(bot, chat_id):
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    for i in range(0, len(CHANCES), 2):
-        keyboard.row(KeyboardButton(CHANCES[i]), KeyboardButton(CHANCES[i+1]))
-    keyboard.row(KeyboardButton(CONFIRM), KeyboardButton(CANCEL))
-    keyboard.row(KeyboardButton("☰ Menu"))
+    buttons = []
+    for chance in ALL_CHANCES:
+        selected = chance in selected_chances[user_id]
+        emoji = "✅" if selected else "➖"
+        buttons.append(InlineKeyboardButton(f"{emoji} {chance}", callback_data=f"toggle_{chance}"))
 
-    selected_chances[chat_id] = set()  # Reset scelte
+    markup.add(*buttons)
+    markup.add(InlineKeyboardButton("🎯 Conferma e inizia il gioco", callback_data="confirm_chances"))
     bot.send_message(
         chat_id,
-        "🎯 *Seleziona le chances* su cui vuoi giocare.\n"
-        "✅ Premi *Conferma selezione* quando sei pronto.",
+        f"🔍 *Suggerite:* {', '.join(suggestions) if suggestions else 'nessuna'}\n\nScegli le chances che vuoi usare:",
         parse_mode='Markdown',
-        reply_markup=keyboard
+        reply_markup=markup
     )
 
-def register(bot):
-    from logic.state import active_chances, user_phase
+def handle_chance_callbacks(bot, call):
+    user_id = call.from_user.id
+    if user_id not in selected_chances:
+        selected_chances[user_id] = []
 
-    @bot.message_handler(func=lambda msg: msg.text in CHANCES)
-    def select_chance(msg):
-        chat_id = msg.chat.id
-        choice = msg.text
-
-        if chat_id not in selected_chances:
-            selected_chances[chat_id] = set()
-
-        if choice in selected_chances[chat_id]:
-            selected_chances[chat_id].remove(choice)
-            bot.send_message(chat_id, f"❎ {choice} rimosso.")
+    if call.data.startswith("toggle_"):
+        chance = call.data.replace("toggle_", "")
+        if chance in selected_chances[user_id]:
+            selected_chances[user_id].remove(chance)
         else:
-            selected_chances[chat_id].add(choice)
-            bot.send_message(chat_id, f"✅ {choice} selezionato.")
-
-    @bot.message_handler(func=lambda msg: msg.text == CONFIRM)
-    def confirm_chances(msg):
-        chat_id = msg.chat.id
-        chosen = list(selected_chances.get(chat_id, []))
-
-        if not chosen:
-            bot.send_message(chat_id, "⚠️ Seleziona almeno una chance prima di confermare.")
-            return
-
-        active_chances[chat_id] = chosen
-        user_phase[chat_id] = "play"
-
+            selected_chances[user_id].append(chance)
+        show_chances_selection(bot, call.message.chat.id, suggestions=[])
+    
+    elif call.data == "confirm_chances":
+        confirmed_chances[user_id] = selected_chances.get(user_id, [])
         bot.send_message(
-            chat_id,
-            f"🎮 *Inizio gioco!* Chances attive: {', '.join(chosen)}",
-            parse_mode='Markdown'
+            call.message.chat.id,
+            f"🎮 *Chances selezionate:* {', '.join(confirmed_chances[user_id])}",
+            parse_mode='Markdown',
+            reply_markup=get_main_keyboard()
         )
-        # TODO: Avvia sistema a box (fase 2)
