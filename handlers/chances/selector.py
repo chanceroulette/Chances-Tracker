@@ -7,6 +7,8 @@ from logic.game import initialize_boxes
 from messages.play import get_start_message
 from messages.keyboard import get_numeric_keyboard
 from messages.chances.keyboard import get_chances_keyboard
+from messages.keyboard_chances import get_chances_keyboard
+
 
 
 def show_chances_selection(bot, message: Message):
