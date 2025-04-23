@@ -1,21 +1,13 @@
 # logic/state.py
 
-# Stato globale condiviso tra le fasi
+# FASE 1: ANALISI
+user_numbers = {}  # user_id: [numeri inseriti]
+suggested_chances = {}  # user_id: [chances suggerite]
+selected_chances = {}  # user_id: set(chances selezionate)
 
-# Numeri inseriti dall’utente durante l’analisi
-user_numbers = {}            # Es: { user_id: [12, 25, 7, ...] }
+# FASE 2: GIOCO
+user_boxes = {}  # user_id: {chance: [box]}
+user_id_phase = {}  # user_id: "analysis" | "selection" | "game"
 
-# Dati utente durante la fase di gioco
-user_data = {}               # Es: { user_id: { phase, numbers, history, boxes, ... } }
-
-# Chances selezionate (sia analisi che avvio rapido)
-selected_chances = {}        # Es: { user_id: ["Rosso", "Pari"] }
-
-# Box attivi del sistema per ogni chance e utente
-user_boxes = {}              # Es: { user_id: { "Rosso": [[1], [1], [1], [1]], ... } }
-
-# Backup per il tasto ↩️ Annulla
-backup_data = {}             # Es: { user_id: { ... } }
-
-# Chances suggerite durante l’analisi (usate per evidenziarle a parte)
-suggested_chances = {}       # Es: { user_id: ["Rosso", "Manque", "Dispari"] }
+# Backup per annullare
+backup_data = {}  # user_id: [numeri prima dell'ultima giocata]
