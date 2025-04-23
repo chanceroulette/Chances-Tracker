@@ -16,9 +16,7 @@ def show_chances_selection(bot, chat_id, suggested=None):
 
     suggerite = ", ".join(suggested) if suggested else "nessuna"
     text = (
-        f"🔍 *Suggerite:* {suggerite}*
-
-"
+        f"🔍 *Suggerite:* {suggerite}\n\n"
         "Scegli le chances che vuoi usare:"
     )
 
@@ -43,20 +41,17 @@ def handle_chance_callbacks(bot):
                 selected_chances[chat_id].remove(chance)
             else:
                 selected_chances[chat_id].append(chance)
-            show_chances_selection(bot, chat_id)  # aggiorna tastiera
+            show_chances_selection(bot, chat_id)
 
         elif data == "confirm_chances":
             if chat_id not in selected_chances or not selected_chances[chat_id]:
                 bot.answer_callback_query(call.id, "❗Devi selezionare almeno una chance.")
                 return
 
-            # Inizializza i box per il gioco
             user_boxes[chat_id] = initialize_boxes(selected_chances[chat_id])
-
             bot.send_message(
                 chat_id,
-                f"🎯 *Gioco avviato!*
-Chances attive: {', '.join(selected_chances[chat_id])}",
+                f"🎯 *Gioco avviato!*\nChances attive: {', '.join(selected_chances[chat_id])}",
                 parse_mode='Markdown',
                 reply_markup=get_main_keyboard()
             )
