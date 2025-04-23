@@ -8,7 +8,7 @@ def get_main_keyboard():
     keyboard.row("🔄 Reset")
     return keyboard
 
-# Tastiera numerica per inserimento numeri 0–36
+# Tastiera numerica per inserimento numeri
 def get_number_keyboard():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     row = []
@@ -19,4 +19,12 @@ def get_number_keyboard():
             row = []
     if row:
         keyboard.row(*row)
+    keyboard.row("↩️ Annulla", "🔄 Reset")
+    return keyboard
+
+# Tastiera per fase di analisi (con avvio rapido)
+def get_analysis_keyboard():
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    keyboard.row("📊 Analizza", "⚡ Avvio rapido")
+    keyboard.row("☰ Menu")
     return keyboard
