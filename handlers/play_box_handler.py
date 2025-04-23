@@ -46,20 +46,23 @@ def register(bot):
         if count < 10:
             bot.send_message(
                 message.chat.id,
-                f"✅ Numero *{count}* registrato: `{number}`. Continua fino a 10 o più numeri...",
-                parse_mode='Markdown'
+                f"✅ Numero *{count}* registrato: `{number}`. Inseriscine almeno 10.",
+                parse_mode='Markdown',
+                reply_markup=get_number_keyboard()
             )
         elif count < 20:
             bot.send_message(
                 message.chat.id,
                 f"✅ Numero *{count}* registrato: `{number}`. Premi *📊 Analizza ora* oppure continua (max 20 numeri).",
-                parse_mode='Markdown'
+                parse_mode='Markdown',
+                reply_markup=get_number_keyboard()
             )
         else:
             bot.send_message(
                 message.chat.id,
-                f"✅ Hai inserito il numero massimo consentito. Procedo all’analisi...",
-                parse_mode='Markdown'
+                f"✅ Numero *{count}* registrato: `{number}`. Procedo all’analisi...",
+                parse_mode='Markdown',
+                reply_markup=get_main_keyboard()
             )
             chances = analyze_chances(user_data[user_id])
             show_chances_selection(bot, message.chat.id, user_id, chances)
@@ -73,7 +76,7 @@ def register(bot):
                 message.chat.id,
                 "⚠️ Devi inserire almeno *10 numeri* per analizzare.",
                 parse_mode='Markdown',
-                reply_markup=get_main_keyboard()
+                reply_markup=get_number_keyboard()
             )
             return
 
