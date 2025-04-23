@@ -4,7 +4,6 @@ from logic.state import user_data, selected_chances, game_phase
 from messages.keyboard import get_main_keyboard
 from handlers.chances_selector import show_chances_selection
 
-
 def register(bot):
     @bot.message_handler(func=lambda message: message.text == "📊 Analizza")
     def start_analysis(message: Message):
@@ -22,6 +21,9 @@ def register(bot):
                 row = []
         if row:
             keyboard.row(*row)
+
+        keyboard.row(KeyboardButton("📊 Analizza ora"))
+        keyboard.row(KeyboardButton("☰ Menu"))
 
         bot.send_message(
             message.chat.id,
@@ -50,7 +52,7 @@ def register(bot):
         elif count < 20:
             bot.send_message(
                 message.chat.id,
-                f"✅ Numero *{count}* registrato: `{number}`. Premi *Analizza* oppure continua (max 20 numeri).",
+                f"✅ Numero *{count}* registrato: `{number}`. Premi *Analizza ora* oppure continua (max 20 numeri).",
                 parse_mode='Markdown'
             )
         else:
