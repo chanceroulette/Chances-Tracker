@@ -1,6 +1,7 @@
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 from messages.keyboard import get_main_keyboard
 from logic.analysis import analyze_chances
+from handlers.undo_handler import backup_data  # per annullare
 
 # Dizionario globale per memorizzare numeri utente
 user_data = {}
@@ -25,6 +26,8 @@ def register(bot):
         if user_id not in user_data:
             user_data[user_id] = []
 
+        # Backup per annullare
+        backup_data[user_id] = user_data[user_id].copy()
         user_data[user_id].append(number)
         count = len(user_data[user_id])
 
