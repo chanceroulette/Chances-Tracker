@@ -3,6 +3,7 @@ from logic.state import selected_chances, user_boxes, game_phase
 from logic.game import update_boxes, get_next_bet
 from messages.keyboard import get_main_keyboard
 
+
 def register(bot):
     @bot.message_handler(func=lambda message: message.text == "🎲 Gioca" or (
         message.text.isdigit() and 0 <= int(message.text) <= 36 and game_phase.get(message.from_user.id) == "gioco"
@@ -22,7 +23,7 @@ def register(bot):
             bot.send_message(chat_id, text, parse_mode='Markdown', reply_markup=get_main_keyboard())
             return
 
-        # Se è stato inserito un numero
+        # Numero inserito nella fase di gioco
         numero = int(message.text)
         results = update_boxes(chat_id, numero)
 
