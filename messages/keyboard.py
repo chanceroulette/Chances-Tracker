@@ -4,10 +4,10 @@ from telebot import types
 def get_main_keyboard():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     
-    # 🔍 Fase di Analisi
+    # 🔍 Fase Analisi
     keyboard.row("📊 Analizza", "⚡ Avvio rapido")
     
-    # 🎯 Fase di Gioco
+    # 🎯 Fase Gioco
     keyboard.row("🎲 Gioca", "↩️ Annulla")
     keyboard.row("📊 Statistiche", "🔄 Reset")
     
@@ -16,7 +16,7 @@ def get_main_keyboard():
     
     return keyboard
 
-# Tastiera numerica 0–36
+# Tastiera numerica 0–36 + menu
 def get_number_keyboard():
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     row = []
@@ -28,11 +28,12 @@ def get_number_keyboard():
     if row:
         keyboard.row(*row)
     keyboard.row("↩️ Annulla", "🔄 Reset")
+    keyboard.row("☰ Menu")  # ✅ Sempre visibile
     return keyboard
 
-# Tastiera analisi fase 1
+# Tastiera solo per accesso all’analisi
 def get_analysis_keyboard():
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.row("📊 Analizza", "⚡ Avvio rapido")
     keyboard.row("☰ Menu")
     return keyboard
