@@ -16,3 +16,6 @@ user_boxes = {}              # Es: { user_id: { "Rosso": [[1], [1], [1], [1]], .
 
 # Backup per il tasto ↩️ Annulla
 backup_data = {}             # Es: { user_id: { ... } }
+
+# Chances suggerite durante l’analisi (usate per evidenziarle a parte)
+suggested_chances = {}       # Es: { user_id: ["Rosso", "Manque", "Dispari"] }
