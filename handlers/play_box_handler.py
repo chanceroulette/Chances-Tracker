@@ -16,11 +16,9 @@ def register(bot):
                 bot.send_message(chat_id, "⚠️ Nessuna sessione di gioco attiva.", reply_markup=get_main_keyboard())
                 return
             bets = get_next_bet(user_boxes[chat_id])
-            text = "🎯 *Prossime fiches da puntare:*
-"
+            text = "🎯 *Prossime fiches da puntare:*\n"
             for chance, value in bets.items():
-                text += f"• {chance}: {value} fiche
-"
+                text += f"• {chance}: {value} fiche\n"
             bot.send_message(chat_id, text, parse_mode='Markdown', reply_markup=get_main_keyboard())
             return
 
@@ -29,18 +27,13 @@ def register(bot):
         results = update_boxes(chat_id, numero)
 
         msg = (
-            f"🎯 Numero uscito: *{numero}*
-
-"
-            "🎰 *Risultati chances:*
-"
+            f"🎯 Numero uscito: *{numero}*\n\n"
+            "🎰 *Risultati chances:*\n"
         )
         for chance, res in results["dettagli"].items():
             icon = "✅" if res == "vinto" else "❌"
-            msg += f"{icon} {chance}: {res}
-"
+            msg += f"{icon} {chance}: {res}\n"
 
-        msg += f"
-💰 *Totale fiches:* +{results['vinti']} / -{results['persi']} → `Δ {results['delta']}`"
+        msg += f"\n💰 *Totale fiches:* +{results['vinti']} / -{results['persi']} → `∆ {results['delta']}`"
 
         bot.send_message(chat_id, msg, parse_mode='Markdown', reply_markup=get_main_keyboard())
