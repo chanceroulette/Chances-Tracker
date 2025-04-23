@@ -1,69 +1,67 @@
-from telebot.types import Message
-from logic.state import user_data
-from messages.keyboard import get_number_keyboard, get_main_keyboard
-from handlers import chances_selector
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from logic.analysis import analyze_chances
+from logic.state import selected_chances, user_boxes
+from messages.keyboard import get_main_keyboard
+from logic.game import initialize_boxes
+
+# Mostra selezione chances
+
+def show_chances_selection(bot, chat_id, numbers):
+    suggerite = []
+    if numbers:
+        suggerite = analyze_chances(numbers)
+
+    markup = InlineKeyboardMarkup(row_width=2)
+    for chance in ["Rosso", "Nero", "Pari", "Dispari", "Manque", "Passe"]:
+        prefix = "✅ " if chance in suggerite else "⬜️ "
+        markup.add(InlineKeyboardButton(f"{prefix}{chance}", callback_data=f"toggle_{chance}"))
+
+    markup.add(InlineKeyboardButton("✔️ Conferma selezione", callback_data="conferma_chances"))
+
+    suggerite_msg = f"🔍 *Suggerite:* {', '.join(suggerite)}\nPuoi modificarle liberamente."
+    bot.send_message(chat_id, suggerite_msg, parse_mode="Markdown", reply_markup=markup)
 
 
-def register(bot):
-    @bot.message_handler(func=lambda message: message.text == "📊 Analizza")
-    def start_analysis(message: Message):
-        user_id = message.from_user.id
-        user_data[user_id] = []
+# Gestione selezione e conferma
 
-        bot.send_message(
-            message.chat.id,
-            "🎯 Inserisci i numeri della roulette uno alla volta usando la tastiera numerica.",
-            parse_mode='Markdown',
-            reply_markup=get_number_keyboard()
-        )
+def handle_chance_callbacks(bot):
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("toggle_"))
+    def toggle_chance(call):
+        user_id = call.from_user.id
+        chance = call.data.replace("toggle_", "")
 
-    @bot.message_handler(func=lambda message: message.text.isdigit() and 0 <= int(message.text) <= 36)
-    def collect_number(message: Message):
-        user_id = message.from_user.id
-        number = int(message.text)
+        if user_id not in selected_chances:
+            selected_chances[user_id] = []
 
-        if user_id not in user_data:
-            user_data[user_id] = []
-
-        user_data[user_id].append(number)
-        count = len(user_data[user_id])
-
-        if count < 10:
-            bot.send_message(
-                message.chat.id,
-                f"✅ Numero {count} registrato: `{number}`. Inseriscine almeno 10.",
-                parse_mode='Markdown'
-            )
-        elif count < 20:
-            bot.send_message(
-                message.chat.id,
-                f"✅ Numero {count} registrato: `{number}`. Premi *Analizza ora* oppure continua (max 20 numeri).",
-                parse_mode='Markdown',
-                reply_markup=get_main_keyboard()
-            )
+        if chance in selected_chances[user_id]:
+            selected_chances[user_id].remove(chance)
         else:
-            bot.send_message(
-                message.chat.id,
-                f"✅ Numero 20 registrato: `{number}`. Avvio analisi...",
-                parse_mode='Markdown'
-            )
-            chances_selector.show_chances_selection(bot, message.chat.id, user_data[user_id])
+            selected_chances[user_id].append(chance)
 
-    @bot.message_handler(func=lambda message: message.text == "📊 Analizza ora")
-    def analyze_now(message: Message):
-        user_id = message.from_user.id
-        if user_id not in user_data or len(user_data[user_id]) < 10:
-            bot.send_message(
-                message.chat.id,
-                "⚠️ Devi inserire almeno 10 numeri per analizzare.",
-                reply_markup=get_main_keyboard()
-            )
+        # Ricostruisce la tastiera aggiornata
+        markup = InlineKeyboardMarkup(row_width=2)
+        for c in ["Rosso", "Nero", "Pari", "Dispari", "Manque", "Passe"]:
+            prefix = "✅ " if c in selected_chances[user_id] else "⬜️ "
+            markup.add(InlineKeyboardButton(f"{prefix}{c}", callback_data=f"toggle_{c}"))
+        markup.add(InlineKeyboardButton("✔️ Conferma selezione", callback_data="conferma_chances"))
+
+        bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=markup)
+
+    @bot.callback_query_handler(func=lambda call: call.data == "conferma_chances")
+    def conferma(call):
+        user_id = call.from_user.id
+
+        if user_id not in selected_chances or len(selected_chances[user_id]) == 0:
+            bot.answer_callback_query(call.id, "❗ Seleziona almeno una chance")
             return
 
-        chances_selector.show_chances_selection(bot, message.chat.id, user_data[user_id])
+        chances = selected_chances[user_id]
+        user_boxes[user_id] = initialize_boxes(chances)
 
-    @bot.message_handler(func=lambda message: message.text == "⚡ Avvio rapido")
-    def quick_start(message: Message):
-        user_id = message.from_user.id
-        user_data[user_id] = []
-        chances_selector.show_chances_selection(bot, message.chat.id, [])
+        bot.send_message(
+            call.message.chat.id,
+            f"✅ Chances attive: *{', '.join(chances)}*\n
+🎯 Inizia il gioco! Inserisci il numero uscito alla roulette.",
+            parse_mode="Markdown",
+            reply_markup=get_main_keyboard()
+        )
