@@ -58,10 +58,14 @@ def handle_chance_callbacks(bot):
         chances = selected_chances[user_id]
         user_boxes[user_id] = initialize_boxes(chances)
 
+        messaggio = (
+            f"✅ Chances attive: *{', '.join(chances)}*\n"
+            f"🎯 Inizia il gioco! Inserisci il numero uscito alla roulette."
+        )
+
         bot.send_message(
             call.message.chat.id,
-            f"✅ Chances attive: *{', '.join(chances)}*\n
-🎯 Inizia il gioco! Inserisci il numero uscito alla roulette.",
+            messaggio,
             parse_mode="Markdown",
             reply_markup=get_main_keyboard()
         )
