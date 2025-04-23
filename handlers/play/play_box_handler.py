@@ -1,53 +1,37 @@
-# handlers/play_box_handler.py
+# handlers/play/play_box_handler.py
 from telebot.types import Message
-from logic.state import selected_chances
+from logic.state import user_data
 from logic.game import get_next_bets, update_boxes
-from messages.keyboard import get_numeric_keyboard
-
-user_history = {}
+from messages.keyboard import get_main_keyboard
 
 
 def register(bot):
-    @bot.message_handler(func=lambda msg: msg.text.isdigit() and 0 <= int(msg.text) <= 36)
-    def handle_play_input(message: Message):
+    @bot.message_handler(func=lambda m: m.text.isdigit())
+    def handle_game_input(message: Message):
         chat_id = message.chat.id
         numero = int(message.text)
 
-        chances = selected_chances.get(chat_id, [])
-        if not chances:
-            bot.send_message(chat_id, "⚠️ Devi prima confermare le chances attive.")
+        if chat_id not in user_data or not user_data[chat_id].get("selected_chances"):
+            bot.send_message(chat_id, "⚠️ Prima devi selezionare le chances tramite Analisi o Avvio rapido.", reply_markup=get_main_keyboard())
             return
 
-        # Salva cronologia (per Annulla o Statistiche in futuro)
-        if chat_id not in user_history:
-            user_history[chat_id] = []
-        user_history[chat_id].append(numero)
+        # Aggiungi numero alla lista
+        user_data[chat_id]["numbers"].append(numero)
 
-        # Calcolo vincite
-        vincite = []
-        if numero == 0:
-            vincite = []
-        else:
-            if numero % 2 == 0:
-                vincite.append("Pari")
-            else:
-                vincite.append("Dispari")
-            if numero >= 1 and numero <= 18:
-                vincite.append("Manque")
-            elif numero >= 19:
-                vincite.append("Passe")
-            if numero in [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]:
-                vincite.append("Rosso")
-            else:
-                vincite.append("Nero")
+        # Ottieni chances attive e boxes
+        chances = user_data[chat_id]["selected_chances"]
+        boxes = user_data[chat_id]["user_boxes"]
 
-        update_boxes(chat_id, vincite)
-        next_bets = get_next_bets(chat_id)
+        # Calcola fiches da puntare e aggiorna stato
+        next_bets = get_next_bets(boxes)
+        update_boxes(boxes, numero, chances)
 
-        msg = f"🎯 Numero uscito: *{numero}*\n\n"
-        msg += "🎰 *Chances vincenti:* " + (", ".join(vincite) if vincite else "Nessuna") + "\n\n"
-        msg += "🎯 *Prossime fiches da puntare:*\n"
-        for ch, val in next_bets.items():
-            msg += f"• {ch}: {val}\n"
+        # Costruisci messaggio
+        bets_text = "\n".join([f"➡️ *{chance}*: {fiches} fiche" for chance, fiches in next_bets.items()])
+        msg = (
+            f"🎯 Numero uscito: *{numero}*\n\n"
+            f"🎯 *Prossime fiches da puntare:*\n{bets_text}\n\n"
+            f"📈 Totale estrazioni: {len(user_data[chat_id]['numbers'])}"
+        )
 
-        bot.send_message(chat_id, msg, parse_mode="Markdown", reply_markup=get_numeric_keyboard())
+        bot.send_message(chat_id, msg, parse_mode="Markdown")
