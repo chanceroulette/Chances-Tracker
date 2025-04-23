@@ -60,16 +60,3 @@ def register(bot):
         game_phase[user_id] = "analisi_completa"
         suggerite = analyze_chances(numeri)
         show_chances_selection(bot, message.chat.id, suggested=suggerite)
-
-# Tastiera numerica
-def get_number_keyboard():
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    row = []
-    for i in range(37):
-        row.append(KeyboardButton(str(i)))
-        if len(row) == 6:
-            keyboard.row(*row)
-            row = []
-    if row:
-        keyboard.row(*row)
-    return keyboard
