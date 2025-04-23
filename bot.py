@@ -10,12 +10,12 @@ from handlers import (
     analyze_handler,
     play_box_handler,
     play_handler,
-    chances_selector,
+    chances_selector,  # importa solo, ma non registrare
     undo_handler,
     stats_handler,
     reset_handler,
-    help_handler,       # aggiunto
-    menu_handler        # aggiunto
+    help_handler,
+    menu_handler
 )
 
 load_dotenv()
@@ -49,12 +49,12 @@ start_handler.register(bot)
 analyze_handler.register(bot)
 play_box_handler.register(bot)
 play_handler.register(bot)
-chances_selector.register(bot)
 undo_handler.register(bot)
 stats_handler.register(bot)
 reset_handler.register(bot)
-help_handler.register(bot)        # registrato
-menu_handler.register(bot)        # registrato
+help_handler.register(bot)
+menu_handler.register(bot)
+# chances_selector.register(bot)  <-- RIMOSSO perché non esiste
 
 # Avvio bot
 if __name__ == "__main__":
