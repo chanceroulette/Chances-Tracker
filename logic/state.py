@@ -1,16 +1,11 @@
-# logic/state.py
-
-# 🔢 Numeri inseriti dall’utente nella fase di analisi
+# Memorizza i numeri inseriti dall’utente
 user_data = {}
 
-# 🎯 Chances selezionate manualmente (sia in avvio rapido che dopo analisi)
-selected_chances = {}
-
-# 📦 Backup dei dati dell’utente (per il tasto "↩️ Annulla")
+# Salva lo stato precedente per annullare
 backup_data = {}
 
-# 📌 Chances confermate dopo la selezione (per avviare la fase di gioco)
-confirmed_chances = {}
+# Memorizza le chances selezionate dall’utente
+selected_chances = {}
 
-# 🔄 Fase attuale dell’utente (es. "analisi", "gioco", ecc.)
-user_phase = {}
+# Stato corrente del gioco (es: "analisi", "gioco", "attesa")
+game_phase = {}
