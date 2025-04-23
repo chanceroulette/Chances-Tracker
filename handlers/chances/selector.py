@@ -20,3 +20,16 @@ def show_chances_selection(bot, chat_id, numbers):
         f"Scegli le chances che vuoi usare:"
     )
     bot.send_message(chat_id, text, parse_mode="Markdown", reply_markup=build_chances_keyboard(chat_id, suggerite))
+
+# Registrazione callback
+
+def register(bot):
+    from handlers.chances import callbacks
+
+    bot.register_callback_query_handler(lambda call: call.data.startswith("toggle_"), lambda call: True)(
+        lambda call: callbacks.toggle_chance(call, bot)
+    )
+
+    bot.register_callback_query_handler(lambda call: call.data == "conferma_chances", lambda call: True)(
+        lambda call: callbacks.conferma_chances(call, bot)
+    )
