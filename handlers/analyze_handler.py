@@ -1,8 +1,7 @@
 from telebot.types import Message
 from logic.state import user_data
 from messages.keyboard import get_number_keyboard, get_main_keyboard
-from messages.chances_selector import show_chances_selection
-
+from handlers.chances_selector import show_chances_selection
 
 def register(bot):
     @bot.message_handler(func=lambda message: message.text == "📊 Analizza")
