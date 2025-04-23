@@ -22,4 +22,30 @@ def show_chances_selection(bot, chat_id, suggested=None):
 def handle_chance_callbacks(bot):
     @bot.callback_query_handler(func=lambda call: call.data.startswith("toggle_") or call.data == "confirm_chances")
     def callback(call: CallbackQuery):
-        chat_id = call.message_
+        chat_id = call.message.chat.id
+        data = call.data
+
+        if data.startswith("toggle_"):
+            chance = data.split("_", 1)[1]
+            if chance in selected_chances.get(chat_id, set()):
+                selected_chances[chat_id].remove(chance)
+            else:
+                selected_chances.setdefault(chat_id, set()).add(chance)
+            show_chances_selection(bot, chat_id, list(selected_chances[chat_id]))
+        elif data == "confirm_chances":
+            if not selected_chances.get(chat_id):
+                bot.answer_callback_query(call.id, "⚠️ Seleziona almeno una chance.")
+                return
+
+            bot.edit_message_text(
+                "✅ *Chances confermate!*\nInizia ora la fase di gioco.",
+                chat_id,
+                call.message.message_id,
+                parse_mode='Markdown'
+            )
+            # Avvia fase gioco con box
+            from handlers.play_handler import start_box_phase
+            start_box_phase(bot, chat_id, list(selected_chances[chat_id]))
+
+            # Tastiera principale
+            bot.send_message(chat_id, "🎮 Sistema attivo. Buon gioco!", reply_markup=get_main_keyboard())
