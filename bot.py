@@ -9,7 +9,6 @@ from handlers import (
     start_handler,
     analyze_handler,
     play_box_handler,
-    play_handler,
     chances_selector,  # importa solo, ma non registrare
     undo_handler,
     stats_handler,
@@ -48,7 +47,6 @@ def send_welcome(message):
 start_handler.register(bot)
 analyze_handler.register(bot)
 play_box_handler.register(bot)
-play_handler.register(bot)
 undo_handler.register(bot)
 stats_handler.register(bot)
 reset_handler.register(bot)
