@@ -2,7 +2,6 @@
 
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
-# Tastiera principale visibile in tutte le fasi
 def get_main_keyboard():
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.row(
@@ -17,7 +16,6 @@ def get_main_keyboard():
     )
     return keyboard
 
-# Tastiera numerica da 0 a 36 (per inserimento numeri roulette)
 def get_numeric_keyboard():
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
     for i in range(0, 37, 6):
