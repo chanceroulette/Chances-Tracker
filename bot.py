@@ -11,7 +11,7 @@ WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
 bot = telebot.TeleBot(TOKEN)
 
-# Import dei vari handler
+# Import dei vari handler standard
 from handlers import (
     start_handler,
     play_handler,
@@ -22,10 +22,10 @@ from handlers import (
     stats_handler
 )
 
-# Import gestore per le callback inline
+# Import callback handler per i pulsanti inline (chances)
 from handlers.chances_selector import handle_chance_callbacks
 
-# Registrazione dei comandi standard
+# Registrazione di tutti i comandi base
 start_handler.register(bot)
 play_handler.register(bot)
 undo_handler.register(bot)
@@ -34,10 +34,10 @@ menu_handler.register(bot)
 help_handler.register(bot)
 stats_handler.register(bot)
 
-# Registrazione callback inline per selezione chances
-bot.register_callback_query_handler(handle_chance_callbacks)
+# ✅ Registrazione gestore per callback inline (chances)
+bot.register_callback_query_handler(handle_chance_callbacks, func=lambda call: True)
 
-# Controlla se il webhook è già impostato
+# Webhook: imposta se diverso da quello attuale
 r = requests.get(f"https://api.telegram.org/bot{TOKEN}/getWebhookInfo")
 current_url = r.json()["result"].get("url", "")
 
@@ -53,7 +53,7 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def index():
-    return "🤖 Bot attivo!"
+    return "🤖 Bot attivo e funzionante!"
 
 @app.route('/', methods=['POST'])
 def webhook():
@@ -63,5 +63,5 @@ def webhook():
     return "OK", 200
 
 if __name__ == '__main__':
-    print("🚀 Avvio Flask...")
+    print("🚀 Flask in ascolto...")
     app.run(host='0.0.0.0', port=10000)
