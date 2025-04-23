@@ -1,57 +1,82 @@
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-from logic.state import selected_chances, user_boxes
-from logic.game import initialize_boxes
+from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton
+from logic.analysis import analyze_chances
+from logic.state import user_data, selected_chances, game_phase
 from messages.keyboard import get_main_keyboard
+from handlers.chances_selector import show_chances_selection
 
-CHANCES = ["Rosso", "Nero", "Pari", "Dispari", "Manque", "Passe"]
+def register(bot):
+    @bot.message_handler(func=lambda message: message.text == "📊 Analizza")
+    def start_analysis(message: Message):
+        user_id = message.from_user.id
+        game_phase[user_id] = "analisi"
+        user_data[user_id] = []
 
-def show_chances_selection(bot, chat_id, suggested=None):
-    markup = InlineKeyboardMarkup(row_width=3)
-    buttons = []
-    for chance in CHANCES:
-        text = f"✅ {chance}" if chance in selected_chances.get(chat_id, []) else chance
-        buttons.append(InlineKeyboardButton(text, callback_data=f"chance_{chance}"))
-    markup.add(*buttons)
-    markup.add(InlineKeyboardButton("🎯 Conferma e inizia il gioco", callback_data="confirm_chances"))
+        # Tastiera numerica 0–36
+        keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+        row = []
+        for i in range(37):
+            row.append(KeyboardButton(str(i)))
+            if len(row) == 6:
+                keyboard.row(*row)
+                row = []
+        if row:
+            keyboard.row(*row)
 
-    suggerite = ", ".join(suggested) if suggested else "nessuna"
-    text = (
-        f"🔍 *Suggerite:* {suggerite}\n\n"
-        "Scegli le chances che vuoi usare:"
-    )
+        keyboard.row(KeyboardButton("📊 Analizza ora"))
+        keyboard.row(KeyboardButton("☰ Menu"))
 
-    bot.send_message(
-        chat_id,
-        text,
-        parse_mode='Markdown',
-        reply_markup=markup
-    )
+        bot.send_message(
+            message.chat.id,
+            "🎯 *Inserisci da 10 a 20 numeri* della roulette usando la tastiera numerica.",
+            parse_mode='Markdown',
+            reply_markup=keyboard
+        )
 
-def handle_chance_callbacks(bot):
-    @bot.callback_query_handler(func=lambda call: call.data.startswith("chance_") or call.data == "confirm_chances")
-    def callback(call):
-        chat_id = call.message.chat.id
-        data = call.data
+    @bot.message_handler(func=lambda message: message.text.isdigit() and 0 <= int(message.text) <= 36)
+    def collect_numbers(message: Message):
+        user_id = message.from_user.id
+        number = int(message.text)
 
-        if data.startswith("chance_"):
-            chance = data.replace("chance_", "")
-            if chat_id not in selected_chances:
-                selected_chances[chat_id] = []
-            if chance in selected_chances[chat_id]:
-                selected_chances[chat_id].remove(chance)
-            else:
-                selected_chances[chat_id].append(chance)
-            show_chances_selection(bot, chat_id)
+        if game_phase.get(user_id) != "analisi":
+            return
 
-        elif data == "confirm_chances":
-            if chat_id not in selected_chances or not selected_chances[chat_id]:
-                bot.answer_callback_query(call.id, "❗Devi selezionare almeno una chance.")
-                return
+        user_data.setdefault(user_id, []).append(number)
+        count = len(user_data[user_id])
 
-            user_boxes[chat_id] = initialize_boxes(selected_chances[chat_id])
+        if count < 10:
             bot.send_message(
-                chat_id,
-                f"🎯 *Gioco avviato!*\nChances attive: {', '.join(selected_chances[chat_id])}",
+                message.chat.id,
+                f"✅ Numero *{count}* registrato: `{number}`. Continua fino a 10 o più numeri...",
+                parse_mode='Markdown'
+            )
+        elif count < 20:
+            bot.send_message(
+                message.chat.id,
+                f"✅ Numero *{count}* registrato: `{number}`. Premi *Analizza ora* oppure continua (max 20 numeri).",
+                parse_mode='Markdown'
+            )
+        else:
+            bot.send_message(
+                message.chat.id,
+                f"✅ Hai inserito il numero massimo consentito. Procedo all’analisi...",
+                parse_mode='Markdown'
+            )
+            chances = analyze_chances(user_data[user_id])
+            show_chances_selection(bot, message.chat.id, user_id, chances)
+            game_phase[user_id] = "selezione"
+
+    @bot.message_handler(func=lambda message: message.text == "📊 Analizza ora")
+    def analyze_now(message: Message):
+        user_id = message.from_user.id
+        if user_id not in user_data or len(user_data[user_id]) < 10:
+            bot.send_message(
+                message.chat.id,
+                "⚠️ Inserisci almeno *10 numeri* prima di analizzare.",
                 parse_mode='Markdown',
                 reply_markup=get_main_keyboard()
             )
+            return
+
+        chances = analyze_chances(user_data[user_id])
+        show_chances_selection(bot, message.chat.id, user_id, chances)
+        game_phase[user_id] = "selezione"
