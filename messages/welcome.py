@@ -6,7 +6,7 @@ def get_welcome_message():
         "• 🎯 Strategie statistiche\n"
         "• 📊 Analisi automatica\n"
         "• 🎲 Gestione intelligente delle fiches\n\n"
-        "Digita /menu o usa i tasti in basso per iniziare subito. 🧠\n\n"
+        "Digita menu o usa i tasti in basso per iniziare subito. 🧠\n\n"
         "_Buona fortuna e buon divertimento!_\n\n"
         "© 2025 *Fabio Felice Cudia* – Tutti i diritti riservati."
     )
