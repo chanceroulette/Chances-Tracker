@@ -1,10 +1,12 @@
 # handlers/play/start_handler.py
-from messages.welcome import get_welcome_message
+from telebot.types import Message
 from messages.keyboard import get_main_keyboard
+from messages.welcome import get_welcome_message
+
 
 def register(bot):
-    @bot.message_handler(commands=['start'])
-    def send_welcome(message):
+    @bot.message_handler(commands=["start"])
+    def start(message: Message):
         bot.send_message(
             message.chat.id,
             get_welcome_message(),
