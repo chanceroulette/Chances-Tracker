@@ -16,34 +16,38 @@ def show_chances_selection(bot, chat_id, suggested=None):
     suggerite = ", ".join(suggested) if suggested else "nessuna"
     bot.send_message(
         chat_id,
-        f"🔍 *Suggerite:* {suggerite}\n\n"
+        f"🔍 *Suggerite:* {suggerite}
+
+"
         f"Scegli le chances che vuoi usare:",
         parse_mode='Markdown',
         reply_markup=markup
     )
 
-def handle_chance_callbacks(call, bot):
-    chat_id = call.message.chat.id
-    data = call.data
+def handle_chance_callbacks(bot):
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("chance_") or call.data == "confirm_chances")
+    def callback(call):
+        chat_id = call.message.chat.id
+        data = call.data
 
-    if data.startswith("chance_"):
-        chance = data.replace("chance_", "")
-        if chat_id not in selected_chances:
-            selected_chances[chat_id] = []
-        if chance in selected_chances[chat_id]:
-            selected_chances[chat_id].remove(chance)
-        else:
-            selected_chances[chat_id].append(chance)
-        show_chances_selection(bot, chat_id)  # aggiorna tastiera
+        if data.startswith("chance_"):
+            chance = data.replace("chance_", "")
+            if chat_id not in selected_chances:
+                selected_chances[chat_id] = []
+            if chance in selected_chances[chat_id]:
+                selected_chances[chat_id].remove(chance)
+            else:
+                selected_chances[chat_id].append(chance)
+            show_chances_selection(bot, chat_id)  # aggiorna tastiera
 
-    elif data == "confirm_chances":
-        if chat_id not in selected_chances or not selected_chances[chat_id]:
-            bot.answer_callback_query(call.id, "❗Devi selezionare almeno una chance.")
-            return
-        bot.send_message(
-            chat_id,
-            f"🎯 *Gioco avviato!*\nChances attive: {', '.join(selected_chances[chat_id])}",
-            parse_mode='Markdown',
-            reply_markup=get_main_keyboard()
-        )
-        # Qui partirà poi la logica a box (fase di gioco vera e propria)
+        elif data == "confirm_chances":
+            if chat_id not in selected_chances or not selected_chances[chat_id]:
+                bot.answer_callback_query(call.id, "❗Devi selezionare almeno una chance.")
+                return
+            bot.send_message(
+                chat_id,
+                f"🎯 *Gioco avviato!*
+Chances attive: {', '.join(selected_chances[chat_id])}",
+                parse_mode='Markdown',
+                reply_markup=get_main_keyboard()
+            )
