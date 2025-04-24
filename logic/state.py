@@ -1,13 +1,14 @@
 # logic/state.py
 
-# FASE 1: ANALISI
-user_numbers = {}  # user_id: [numeri inseriti]
-suggested_chances = {}  # user_id: [chances suggerite]
-selected_chances = {}  # user_id: set(chances selezionate)
+# Dati temporanei per ogni utente
+user_numbers = {}           # Numeri inseriti nella fase di analisi
+suggested_chances = {}      # Le chances suggerite dopo l’analisi
+selected_chances = {}       # Le chances selezionate dall’utente
+user_boxes = {}             # Box di gioco per ogni chance selezionata
+backup_data = {}            # Backup per funzione Annulla
+user_id_phase = {}          # Fase corrente dell'utente
 
-# FASE 2: GIOCO
-user_boxes = {}  # user_id: {chance: [box]}
-user_id_phase = {}  # user_id: "analysis" | "selection" | "game"
-
-# Backup per annullare
-backup_data = {}  # user_id: [numeri prima dell'ultima giocata]
+# Costanti per le fasi
+PHASE_ANALYSIS = "analysis"       # Inserimento numeri per analisi
+PHASE_SELECTION = "selection"     # Selezione chances
+PHASE_PLAY = "play"               # Fase di gioco attiva
