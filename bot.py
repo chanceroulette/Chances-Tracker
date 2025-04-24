@@ -10,7 +10,6 @@ bot = telebot.TeleBot(BOT_TOKEN)
 # ⬇️ Import handler principali
 from handlers.analysis import insert_handler, analyze_handler
 from handlers.chances import selector
-from handlers.admin import admin_handler
 from handlers.core import start_handler, menu_handler
 from handlers.play import play_handler
 from handlers.undo import undo_handler
@@ -37,10 +36,6 @@ def handle_report(message):
 @bot.message_handler(commands=["reset"])
 def handle_reset(message):
     reset_handler.handle_reset(bot, message)
-
-@bot.message_handler(commands=["admin"])
-def handle_admin(message):
-    admin_handler.handle_admin(bot, message)
 
 @bot.message_handler(func=lambda msg: msg.text.isdigit())
 def handle_number_input(message):
