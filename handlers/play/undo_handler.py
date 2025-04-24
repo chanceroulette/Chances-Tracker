@@ -1,24 +1,26 @@
-# handlers/play/undo_handler.py
 from telebot.types import Message
-from logic.state import user_data, backup_data
+from logic.state import user_numbers, backup_data
 from messages.keyboard import get_main_keyboard
 
-
 def register(bot):
-    @bot.message_handler(func=lambda m: m.text == "↩️ Annulla")
-    def undo_last(message: Message):
-        chat_id = message.chat.id
+    @bot.message_handler(func=lambda message: message.text == "↩️ Annulla")
+    def undo(message: Message):
+        user_id = message.from_user.id
 
-        if chat_id in backup_data:
-            user_data[chat_id] = backup_data[chat_id].copy()
+        if user_id in backup_data:
+            user_numbers[user_id] = backup_data[user_id]
+            del backup_data[user_id]
+
             bot.send_message(
-                chat_id,
-                "↩️ Ultima giocata annullata.",
+                message.chat.id,
+                "↩️ Ultima giocata *annullata*.",
+                parse_mode='Markdown',
                 reply_markup=get_main_keyboard()
             )
         else:
             bot.send_message(
-                chat_id,
-                "⚠️ Nessuna giocata precedente da annullare.",
+                message.chat.id,
+                "⚠️ Nessuna giocata da annullare.",
+                parse_mode='Markdown',
                 reply_markup=get_main_keyboard()
             )
