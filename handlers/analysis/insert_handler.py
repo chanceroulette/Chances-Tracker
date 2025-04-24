@@ -2,6 +2,7 @@ from telebot.types import Message
 from logic.state import user_numbers, user_id_phase, PHASE_ANALYSIS
 from messages.analysis.keyboard_analisi import get_numeric_keyboard, get_analysis_keyboard
 
+
 MAX_NUMBERS = 20
 MIN_NUMBERS = 10
 
