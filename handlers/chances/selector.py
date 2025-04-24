@@ -1,21 +1,25 @@
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import Message
+from logic.state import suggested_chances, selected_chances, user_id_phase, PHASE_SELECTION
+from messages.keyboard import get_main_keyboard
+from messages.chances_keyboard import get_chances_keyboard
 
-CHANCES = ["Rosso", "Nero", "Pari", "Dispari", "Manque", "Passe"]
+def show_chances_selection(bot, message: Message, user_id: int):
+    user_id_phase[user_id] = PHASE_SELECTION
+    selected_chances[user_id] = []
 
-# Mostra tastiera inline con chances
+    suggerite = suggested_chances.get(user_id, [])
+    suggerite_text = f"🔍 *Suggerite:* {', '.join(suggerite)}\n\n" if suggerite else ""
 
-def get_chance_markup(suggerite=None):
-    markup = InlineKeyboardMarkup(row_width=3)
-    buttons = []
-    for chance in CHANCES:
-        emoji = "✅" if suggerite and chance in suggerite else "➖"
-        buttons.append(InlineKeyboardButton(f"{emoji} {chance}", callback_data=f"toggle_{chance}"))
-    markup.add(*buttons)
-    markup.add(InlineKeyboardButton("✅ Conferma", callback_data="confirm_chances"))
-    return markup
+    bot.send_message(
+        message.chat.id,
+        f"{suggerite_text}"
+        "☑️ Seleziona da *1 a 6* chances semplici per iniziare a giocare.\n"
+        "_Quando hai finito, premi Conferma._",
+        parse_mode='Markdown',
+        reply_markup=get_chances_keyboard(user_id)
+    )
 
-# Funzione per mostrare la selezione delle chances
-def show_chances_selection(bot, message, suggerite=None):
-    markup = get_chance_markup(suggerite)
-    msg = f"🔍 *Suggerite:* {', '.join(suggerite)}\n_Seleziona manualmente le chances che vuoi attivare._"
-    bot.send_message(message.chat.id, msg, parse_mode="Markdown", reply_markup=markup)
+# ✅ Aggiunta per evitare l'errore nel bot.py
+def register(bot):
+    # Non serve registrare nulla qui, ma la funzione deve esistere
+    pass
