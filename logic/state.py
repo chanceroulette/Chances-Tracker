@@ -1,4 +1,4 @@
-# logic/state.py
+# ✅ Contenuto completo e corretto del file logic/state.py
 
 # Dati temporanei per ogni utente
 user_numbers = {}           # Numeri inseriti nella fase di analisi
