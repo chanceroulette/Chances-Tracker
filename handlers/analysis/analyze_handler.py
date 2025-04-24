@@ -1,18 +1,21 @@
-# analyze_handler.py
 from telebot.types import Message
 from logic.state import user_numbers
+from logic.analysis import get_top_chances
 from handlers.chances.selector import show_chances_selection
-from messages.analysis.keyboard import get_numeric_keyboard
 
-def register(bot):
-    @bot.message_handler(func=lambda msg: msg.text == "📊 Analizza ora")
-    def handle_analysis(message: Message):
-        chat_id = message.chat.id
-        numbers = user_numbers.get(chat_id, [])
+def handle_analysis(bot, message: Message):
+    user_id = message.from_user.id
+    numbers = user_numbers.get(user_id, [])
 
-        if len(numbers) < 10:
-            bot.send_message(chat_id, "⚠️ Devi inserire almeno 10 numeri per analizzare.", reply_markup=get_numeric_keyboard())
-            return
+    if len(numbers) < 10:
+        bot.send_message(
+            message.chat.id,
+            f"⚠️ Hai inserito solo {len(numbers)} numeri.\nInseriscine almeno 10 per poter effettuare l'analisi."
+        )
+        return
 
-        bot.send_message(chat_id, "🌯 Analisi in corso...", reply_markup=None)
-        show_chances_selection(bot, chat_id, numbers)
+    # Analizza le chances più frequenti tra i numeri inseriti
+    top_chances = get_top_chances(numbers, limit=3)
+
+    # Passa alla fase di selezione con le chances suggerite
+    show_chances_selection(bot, message, top_chances)
