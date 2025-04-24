@@ -1,4 +1,4 @@
-# messages/keyboard.py
+# messages/keyboard_generale.py
 
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
