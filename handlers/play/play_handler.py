@@ -1,30 +1,50 @@
-from telebot.types import Message
-from logic.state import user_id_phase, PHASE_PLAY
-from logic.game import get_next_bet, update_boxes
-from messages.keyboard import get_numeric_keyboard, get_main_keyboard
+from telebot.types import CallbackQuery, Message
+from logic.state import selected_chances, user_id_phase, PHASE_PLAY
+from messages.keyboard_generale import get_main_keyboard
 
+def handle_callback(bot, call: CallbackQuery):
+    data = call.data
 
-def register(bot):
-    @bot.message_handler(func=lambda m: user_id_phase.get(m.from_user.id) == PHASE_PLAY and m.text.isdigit())
-    def handle_play_number(message: Message):
-        user_id = message.from_user.id
-        numero = int(message.text)
+    if data.startswith("toggle_"):
+        handle_toggle_chance(bot, call)
 
-        # Calcolo delle puntate da effettuare
-        bets = get_next_bet(user_id)
+    elif data == "confirm_chances":
+        handle_confirm_chances(bot, call)
 
-        msg = f"🎯 Numero uscito: *{numero}*\n\n"
-        msg += "🎲 Puntate da effettuare:\n"
+def handle_toggle_chance(bot, call: CallbackQuery):
+    user_id = call.from_user.id
+    chance = call.data.replace("toggle_", "")
 
-        for chance, bet in bets.items():
-            msg += f"• `{chance}`: {bet} fiches\n"
+    selected = selected_chances.get(user_id, [])
+    if chance in selected:
+        selected.remove(chance)
+    else:
+        selected.append(chance)
 
-        # Aggiorna i box in base all'esito del numero
-        update_boxes(user_id, numero)
+    selected_chances[user_id] = selected
 
-        bot.send_message(
-            message.chat.id,
-            msg,
-            parse_mode='Markdown',
-            reply_markup=get_numeric_keyboard()
-        )
+    # Aggiorna tastiera
+    from messages.chances_keyboard import get_chances_keyboard
+    markup = get_chances_keyboard(user_id)
+
+    bot.edit_message_reply_markup(
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        reply_markup=markup
+    )
+
+def handle_confirm_chances(bot, call: CallbackQuery):
+    user_id = call.from_user.id
+    chances = selected_chances.get(user_id, [])
+
+    if not chances:
+        bot.answer_callback_query(call.id, "⚠️ Seleziona almeno una chance.")
+        return
+
+    user_id_phase[user_id] = PHASE_PLAY
+
+    bot.send_message(
+        call.message.chat.id,
+        f"✅ Chances confermate: {', '.join(chances)}.\nPuoi ora iniziare a giocare.",
+        reply_markup=get_main_keyboard()
+    )
