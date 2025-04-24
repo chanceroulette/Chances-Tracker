@@ -1,21 +1,35 @@
-def analyze_chances(numbers):
-    stats = {
-        "Rosso": 0, "Nero": 0,
-        "Pari": 0, "Dispari": 0,
-        "Manque": 0, "Passe": 0
-    }
+from collections import Counter
 
-    red_numbers = {1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36}
-    for num in numbers:
-        if num in red_numbers:
-            stats["Rosso"] += 1
+# Mappature fisse per le chances semplici
+RED_NUMBERS = {1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36}
+BLACK_NUMBERS = {2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35}
+
+def classify_chances(number):
+    """Restituisce una lista di chances a cui il numero appartiene"""
+    chances = []
+    if number in RED_NUMBERS:
+        chances.append("Rosso")
+    elif number in BLACK_NUMBERS:
+        chances.append("Nero")
+
+    if number != 0:
+        if number % 2 == 0:
+            chances.append("Pari")
         else:
-            stats["Nero"] += 1
+            chances.append("Dispari")
 
-        if num != 0:
-            stats["Pari" if num % 2 == 0 else "Dispari"] += 1
-            stats["Manque" if num <= 18 else "Passe"] += 1
+        if 1 <= number <= 18:
+            chances.append("Manque")
+        elif 19 <= number <= 36:
+            chances.append("Passe")
+    return chances
 
-    sorted_stats = sorted(stats.items(), key=lambda x: x[1], reverse=True)
-    top_chances = [chance for chance, _ in sorted_stats[:3]]
-    return top_chances
+def get_top_chances(numbers, limit=3):
+    """Analizza i numeri e restituisce le 'limit' chances più frequenti"""
+    all_chances = []
+    for number in numbers:
+        all_chances.extend(classify_chances(number))
+
+    counter = Counter(all_chances)
+    top = counter.most_common(limit)
+    return [chance for chance, _ in top]
