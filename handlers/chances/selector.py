@@ -28,6 +28,7 @@ def get_chance_markup(chances):
     keyboard.add(InlineKeyboardButton("✅ Conferma", callback_data="confirm_chances"))
     return keyboard
 
-def register(bot: TeleBot):
+
+def register(bot):
     # Non ci sono handler da registrare al momento, ma la funzione è qui per evitare errori
-    print("✅ selector.py caricato — nessun handler registrato, solo funzioni di supporto.")
+    print("✅ selector.py caricato — nessun handler registrato.")
