@@ -1,25 +1,27 @@
-from telebot.types import Message
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from logic.state import suggested_chances, selected_chances, user_id_phase, PHASE_SELECTION
-from messages.keyboard import get_main_keyboard
 from messages.chances_keyboard import get_chances_keyboard
 
-def show_chances_selection(bot, message: Message, user_id: int):
+def show_chances_selection(bot, message, chances):
+    user_id = message.from_user.id
+    suggested_chances[user_id] = chances
+    selected_chances[user_id] = []  # reset scelta
     user_id_phase[user_id] = PHASE_SELECTION
-    selected_chances[user_id] = []
 
-    suggerite = suggested_chances.get(user_id, [])
-    suggerite_text = f"🔍 *Suggerite:* {', '.join(suggerite)}\n\n" if suggerite else ""
+    suggerite = ', '.join(chances)
 
     bot.send_message(
         message.chat.id,
-        f"{suggerite_text}"
-        "☑️ Seleziona da *1 a 6* chances semplici per iniziare a giocare.\n"
-        "_Quando hai finito, premi Conferma._",
+        f"🔍 *Suggerite:* {suggerite}\n\n"
+        "✋ Seleziona le chances con cui vuoi giocare.\n"
+        "✅ Premi *Conferma* per avviare il sistema.",
         parse_mode='Markdown',
-        reply_markup=get_chances_keyboard(user_id)
+        reply_markup=get_chance_markup(chances)
     )
 
-# ✅ Aggiunta per evitare l'errore nel bot.py
-def register(bot):
-    # Non serve registrare nulla qui, ma la funzione deve esistere
-    pass
+def get_chance_markup(chances):
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    buttons = [InlineKeyboardButton(text=chance, callback_data=f"toggle_{chance}") for chance in chances]
+    keyboard.add(*buttons)
+    keyboard.add(InlineKeyboardButton("✅ Conferma", callback_data="confirm_chances"))
+    return keyboard
