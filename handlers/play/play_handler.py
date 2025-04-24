@@ -35,10 +35,3 @@ def register(bot):
             parse_mode='Markdown',
             reply_markup=get_numeric_keyboard()
         )
-
-        bot.send_message(
-            chat_id,
-            "🎯 Inserisci i numeri uno per volta (0-36) usando la tastiera qui sotto.",
-            parse_mode='Markdown',
-            reply_markup=get_numeric_keyboard()
-        )
