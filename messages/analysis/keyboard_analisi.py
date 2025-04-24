@@ -1,21 +1,19 @@
-from telebot.types import Message
-from logic.state import user_numbers
-from logic.analysis import get_top_chances
-from handlers.chances.selector import show_chances_selection
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
-def handle_analysis(bot, message: Message):
-    user_id = message.from_user.id
-    numbers = user_numbers.get(user_id, [])
+def get_numeric_keyboard():
+    """
+    Tastiera numerica da 0 a 36 per l’inserimento dei numeri della roulette.
+    """
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True, row_width=6)
+    buttons = [KeyboardButton(str(i)) for i in range(37)]
+    for i in range(0, 37, 6):
+        keyboard.add(*buttons[i:i+6])
+    return keyboard
 
-    if len(numbers) < 10:
-        bot.send_message(
-            message.chat.id,
-            f"⚠️ Hai inserito solo {len(numbers)} numeri.\nInseriscine almeno 10 per poter effettuare l'analisi."
-        )
-        return
-
-    # Analizza le chances più frequenti tra i numeri inseriti
-    top_chances = get_top_chances(numbers, limit=3)
-
-    # Passa alla fase di selezione con le chances suggerite
-    show_chances_selection(bot, message, top_chances)
+def get_analysis_keyboard():
+    """
+    Tastiera con il pulsante per avviare l'analisi dopo aver inserito almeno 10 numeri.
+    """
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.add(KeyboardButton("📊 Analizza"))
+    return keyboard
