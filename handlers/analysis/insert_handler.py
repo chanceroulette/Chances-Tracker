@@ -1,29 +1,47 @@
-# handlers/analysis/insert_handler.py
+from telebot.types import Message, ReplyKeyboardMarkup, KeyboardButton
+from logic.state import user_numbers, user_id_phase, PHASE_ANALYSIS
+from logic.keyboards import get_numeric_keyboard, get_analysis_keyboard
 
-from telebot.types import Message
-from logic.state import user_numbers
-from messages.analysis.keyboard import get_numeric_keyboard
+MAX_NUMBERS = 20
+MIN_NUMBERS = 10
 
-def register(bot):
-    @bot.message_handler(func=lambda msg: msg.text.isdigit() and 0 <= int(msg.text) <= 36)
-    def handle_number_input(message: Message):
-        chat_id = message.chat.id
-        number = int(message.text)
+def handle_number_input(bot, message: Message):
+    user_id = message.from_user.id
+    text = message.text.strip()
 
-        if chat_id not in user_numbers:
-            user_numbers[chat_id] = []
+    # Verifica se è un numero valido tra 0 e 36
+    if not text.isdigit() or not (0 <= int(text) <= 36):
+        bot.send_message(message.chat.id, "❌ Inserisci un numero valido tra 0 e 36.")
+        return
 
-        if len(user_numbers[chat_id]) >= 20:
-            bot.send_message(chat_id, "⚠️ Hai già inserito 20 numeri. Premi '📊 Analizza ora' oppure resetta.")
-            return
+    number = int(text)
+    numbers = user_numbers.get(user_id, [])
+    numbers.append(number)
+    user_numbers[user_id] = numbers
 
-        user_numbers[chat_id].append(number)
-        response = f"✅ Numero {len(user_numbers[chat_id])} registrato: *{number}*"
-        if len(user_numbers[chat_id]) < 10:
-            response += ". Inseriscine almeno 10."
-        elif len(user_numbers[chat_id]) == 10:
-            response += ". Premi *Analizza ora* oppure continua (max 20 numeri)."
-        else:
-            response += ". Puoi ancora inserirne fino a 20 o premere *Analizza ora*."
+    count = len(numbers)
 
-        bot.send_message(chat_id, response, parse_mode="Markdown", reply_markup=get_numeric_keyboard())
+    if count < MIN_NUMBERS:
+        bot.send_message(
+            message.chat.id,
+            f"✅ Numero {count} salvato: *{number}*.\nInserisci almeno {MIN_NUMBERS} numeri.",
+            parse_mode='Markdown',
+            reply_markup=get_numeric_keyboard()
+        )
+
+    elif MIN_NUMBERS <= count < MAX_NUMBERS:
+        bot.send_message(
+            message.chat.id,
+            f"✅ Numero {count} salvato: *{number}*.\nHai inserito abbastanza numeri.\nPremi 📊 *Analizza* oppure continua fino a {MAX_NUMBERS}.",
+            parse_mode='Markdown',
+            reply_markup=get_analysis_keyboard()
+        )
+
+    elif count == MAX_NUMBERS:
+        bot.send_message(
+            message.chat.id,
+            f"✅ Numero {count} salvato: *{number}*.\n📊 Hai inserito il massimo di numeri consentiti.",
+            parse_mode='Markdown',
+            reply_markup=get_analysis_keyboard()
+        )
+        user_id_phase[user_id] = PHASE_ANALYSIS
